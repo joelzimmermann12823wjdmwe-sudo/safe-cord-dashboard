@@ -5,94 +5,170 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe-Cord Dashboard | {{ user_info.username }}</title>
     <style>
-        /* [DESIGN CSS, UNVERÄNDERT] */
-        body { font-family: 'Arial', sans-serif; background-color: #18191C; color: #F2F3F5; margin: 0; padding: 0; display: flex; min-height: 100vh; }
-        .sidebar { width: 250px; background-color: #202225; padding: 20px; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); position: fixed; height: 100%; overflow-y: auto; }
-        .sidebar h2 { color: #A067F9; margin-top: 0; border-bottom: 2px solid #4E7EFF; padding-bottom: 10px; margin-bottom: 30px; }
-        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; color: #F2F3F5; text-decoration: none; display: block; transition: background-color 0.2s, color 0.2s; }
-        .nav-item:hover { background-color: #4E7EFF; color: #FFFFFF; }
-        .nav-item.active { background-color: #4E7EFF; color: #FFFFFF; }
-        .main-content { margin-left: 250px; flex-grow: 1; padding: 40px; }
-        .welcome-header { color: #A067F9; margin-bottom: 30px; }
-        .card { background-color: #282A2E; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); margin-bottom: 20px; }
-        .card h3 { color: #4E7EFF; margin-top: 0; border-bottom: 1px dashed #36393F; padding-bottom: 10px; margin-bottom: 15px; }
-        .user-footer { position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; background-color: #18191C; border-top: 1px solid #36393F; }
-        .user-footer p { margin: 5px 0; font-size: 0.9em; }
-        .user-footer a { color: #A067F9; text-decoration: none; transition: color 0.2s; }
-        .user-footer a:hover { color: #F2F3F5; }
+        /* NEON CYBERPUNK PALETTE */
+        :root {
+            --bg-dark: #0D1117; /* Hintergrund */
+            --bg-card: #161B22; /* Card Hintergrund */
+            --accent-cyan: #00FFC2; /* Primärer Neon-Akzent */
+            --accent-purple: #BB86FC; /* Sekundärer Akzent / Buttons */
+            --text-light: #C9D1D9;
+            --success: #38c172;
+        }
 
-        /* NEUE FORMULAR STILE */
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: #A067F9; }
+        /* [DESIGN CSS, ÜBERARBEITET] */
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: var(--text-light); 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            min-height: 100vh; 
+        }
+        .sidebar { 
+            width: 250px; 
+            background-color: var(--bg-card); 
+            padding: 20px; 
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); 
+            position: fixed; 
+            height: 100%; 
+            overflow-y: auto; 
+            border-right: 1px solid #00FFC233; /* Dezente Neon-Linie */
+        }
+        .sidebar h2 { 
+            color: var(--accent-cyan); 
+            margin-top: 0; 
+            border-bottom: 2px solid var(--accent-purple); 
+            padding-bottom: 15px; 
+            margin-bottom: 30px; 
+            text-shadow: 0 0 5px var(--accent-purple);
+        }
+        .nav-item { 
+            padding: 12px 15px; 
+            margin-bottom: 8px; 
+            border-radius: 8px; 
+            color: var(--text-light); 
+            text-decoration: none; 
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: background-color 0.2s, color 0.2s, box-shadow 0.2s; 
+        }
+        .nav-item:hover { 
+            background-color: #00FFC21A;
+            color: var(--accent-cyan); 
+        }
+        .nav-item.active { 
+            background-color: var(--accent-purple); 
+            color: white; 
+            box-shadow: 0 0 10px var(--accent-purple); 
+        }
+        .main-content { 
+            margin-left: 250px; 
+            flex-grow: 1; 
+            padding: 40px; 
+        }
+        .welcome-header { 
+            color: var(--accent-cyan); 
+            margin-bottom: 30px; 
+            text-shadow: 0 0 8px #00FFC280;
+        }
+        .card { 
+            background-color: var(--bg-card); 
+            border-radius: 12px; 
+            padding: 25px; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
+            margin-bottom: 20px; 
+            border: 1px solid var(--accent-purple); 
+            transition: border-color 0.3s;
+        }
+        .card:hover { border-color: var(--accent-cyan); }
+        .card h3 { 
+            color: var(--accent-purple); 
+            margin-top: 0; 
+            border-bottom: 1px dashed var(--accent-cyan); 
+            padding-bottom: 10px; 
+            margin-bottom: 15px; 
+        }
+        
+        /* FORM & BUTTON STYLES */
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--accent-cyan); }
         input[type="text"], textarea, select {
-            width: 100%;
-            padding: 10px;
-            margin-bottom: 20px;
-            border: 1px solid #36393F;
-            background-color: #36393F;
-            color: #F2F3F5;
-            border-radius: 6px;
-            box-sizing: border-box;
+            width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--accent-purple);
+            background-color: var(--bg-dark); color: var(--text-light); border-radius: 6px; box-sizing: border-box;
+            transition: border-color 0.2s;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            border-color: var(--accent-cyan); outline: none; box-shadow: 0 0 5px var(--accent-cyan);
         }
         .submit-button {
-            display: inline-block;
-            padding: 10px 20px;
-            background-color: #4E7EFF; /* Neon-Blau */
-            color: white;
-            text-decoration: none;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background-color 0.2s;
+            padding: 12px 25px; background-color: var(--accent-purple); color: white; border: none;
+            border-radius: 6px; cursor: pointer; font-weight: bold; letter-spacing: 1px;
+            transition: background-color 0.2s, box-shadow 0.2s;
         }
         .submit-button:hover {
-            background-color: #3B6FE5;
+            background-color: #9C27B0; box-shadow: 0 0 15px var(--accent-purple);
         }
 
-        /* TAB-NAVIGATION */
-        .tab-menu {
-            display: flex;
-            margin-bottom: 20px;
-            border-bottom: 2px solid #36393F;
+        /* TOGGLE SWITCH */
+        .toggle-container { display: flex; align-items: center; margin-bottom: 20px;}
+        .toggle-switch {
+            position: relative; display: inline-block; width: 60px; height: 34px; margin-left: 10px;
         }
-        .tab-button {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: transparent;
-            border: none;
-            color: #F2F3F5;
-            font-size: 1em;
-            transition: color 0.2s, border-bottom 0.2s;
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 34px;
         }
-        .tab-button:hover {
-            color: #4E7EFF;
+        .slider:before {
+            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
+            background-color: white; transition: .4s; border-radius: 50%;
         }
-        .tab-button.active {
-            color: #A067F9;
-            border-bottom: 3px solid #A067F9;
+        input:checked + .slider { background-color: var(--accent-cyan); }
+        input:checked + .slider:before { transform: translateX(26px); }
+        
+        /* TAB-CONTENT */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* FOOTER */
+        .user-footer { 
+            position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; 
+            background-color: var(--bg-dark); border-top: 1px solid var(--accent-purple); 
         }
-        .tab-content {
-            display: none;
-        }
-        .tab-content.active {
-            display: block;
-        }
+        .user-footer p { margin: 5px 0; font-size: 0.9em; }
+        .user-footer a { color: var(--accent-cyan); text-decoration: none; transition: color 0.2s; }
+        .user-footer a:hover { color: white; text-shadow: 0 0 5px var(--accent-cyan);}
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <h2>Safe-Cord Dashboard</h2>
+        <h2>Safe-Cord</h2>
         
-        <div class="card" style="margin-bottom: 20px; padding: 10px;">
-            <select style="width: 100%; padding: 8px; background-color: #36393F; color: #F2F3F5; border: none; border-radius: 6px;">
+        <!-- SERVER-AUSWAHL -->
+        <div class="card" style="margin-bottom: 20px; padding: 10px; border: 1px solid var(--accent-cyan); box-shadow: none;">
+            <select style="width: 100%; padding: 8px; background-color: var(--bg-dark); color: var(--text-light); border: none; border-radius: 6px;">
                 <option>Test Server Alpha</option>
             </select>
         </div>
 
-        <a href="#overview" class="nav-item active" onclick="showTab('overview', this)">🏠 Übersicht</a>
-        <a href="#welcome" class="nav-item" onclick="showTab('welcome', this)">👋 Willkommen/Rollen</a>
-        <a href="#logging" class="nav-item" onclick="showTab('logging', this)">🔒 Logging</a>
+        <!-- NAVIGATION -->
+        <a href="#overview" class="nav-item active" onclick="showTab('overview', this)">
+            <span style="font-size: 1.2em;">🏠</span> Übersicht
+        </a>
+        <a href="#welcome" class="nav-item" onclick="showTab('welcome', this)">
+            <span style="font-size: 1.2em;">👋</span> Willkommen/Rollen
+        </a>
+        <a href="#moderation" class="nav-item" onclick="showTab('moderation', this)">
+            <span style="font-size: 1.2em;">🛡️</span> Moderation
+        </a>
+        <a href="#logging" class="nav-item" onclick="showTab('logging', this)">
+            <!-- Einstellungs-Icon: '⚙️' -->
+            <span style="font-size: 1.2em;">⚙️</span> Logging
+        </a>
         
+        <!-- USER-FOOTER -->
         <div class="user-footer">
             <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
             <p><a href="/logout">Logout</a></p>
@@ -100,61 +176,105 @@
     </div>
 
     <div class="main-content">
-        <h1 class="welcome-header">Willkommen, {{ user_info.username }}!</h1>
+        <h1 class="welcome-header">Kontrollzentrum | {{ user_info.username }}</h1>
         
+        <!-- SUCCESS MESSAGE -->
         {% if message %}
-        <div class="card" style="background-color: #38c172; color: black; padding: 10px; margin-bottom: 20px;">
+        <div class="card" style="background-color: var(--success); color: var(--bg-dark); padding: 15px; margin-bottom: 20px; font-weight: bold; border: none; box-shadow: 0 0 10px rgba(56, 193, 114, 0.8);">
             {{ message }}
         </div>
         {% endif %}
 
+        <!-- 1. ÜBERSICHT -->
         <div id="overview" class="tab-content active">
             <h2>🏠 Bot-Status Übersicht</h2>
-            <div class="card-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
-                <div class="card"><h3>👥 Aktive Benutzer</h3><p style="font-size: 2em; color: #4E7EFF;">[Daten]</p></div>
-                <div class="card"><h3>💬 Befehle (24h)</h3><p style="font-size: 2em; color: #A067F9;">[Daten]</p></div>
-                <div class="card"><h3>🔒 Logging-Status</h3><p style="font-size: 2em; color: green;">Aktiv</p></div>
+            <div class="card" style="display: flex; justify-content: space-between; gap: 20px;">
+                <div style="flex: 1;"><h3>Datenbank</h3><p style="font-size: 1.5em; color: var(--accent-cyan);">{% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}</p></div>
+                <div style="flex: 1;"><h3>Willkommenskanal</h3><p style="font-size: 1.5em; color: var(--accent-purple);">{% if current_config.welcome_channel %} {{ current_config.welcome_channel }} {% else %} Nicht gesetzt {% endif %}</p></div>
+                <div style="flex: 1;"><h3>Filter Aktiv</h3><p style="font-size: 1.5em; color: {% if current_config.profanity_filter_enabled %} var(--accent-cyan) {% else %} var(--text-light) {% endif %}" >{% if current_config.profanity_filter_enabled %} JA {% else %} NEIN {% endif %}</p></div>
             </div>
             <div class="card">
-                <h3>📢 Hinweis</h3>
-                <p>Wähle links im Menü eine Konfigurationsseite aus, um deinen Bot einzurichten.</p>
+                <h3>📢 Status-Hinweis</h3>
+                <p>Das Dashboard ist nun vollständig auf die **Firestore-Datenbank** umgestellt. Alle Einstellungen werden persistent gespeichert. Wähle links im Menü eine Konfigurationsseite aus, um deinen Bot einzurichten.</p>
             </div>
         </div>
 
+        <!-- 2. WILLKOMMEN / ROLLEN -->
         <div id="welcome" class="tab-content">
             <h2>👋 Willkommen & Auto-Rollen</h2>
             <form action="/save_config" method="POST" class="card">
                 <input type="hidden" name="config_type" value="welcome">
                 <h3>Willkommensnachricht</h3>
                 <label for="welcome_channel">Willkommens-Kanal (ID):</label>
-                <input type="text" id="welcome_channel" name="welcome_channel" placeholder="z.B. 1234567890..." required>
+                <input type="text" id="welcome_channel" name="welcome_channel" 
+                       value="{{ current_config.welcome_channel | default('', true) }}" 
+                       placeholder="z.B. 1234567890..." required>
                 
                 <label for="welcome_message">Nachricht:</label>
-                <textarea id="welcome_message" name="welcome_message" rows="5" placeholder="Willkommen {user}! Viel Spaß auf {server}." required></textarea>
+                <textarea id="welcome_message" name="welcome_message" rows="5" 
+                          placeholder="Willkommen {user}! Viel Spaß auf {server}." 
+                          required>{{ current_config.welcome_message | default('', true) }}</textarea>
                 
                 <h3>Auto-Rollen</h3>
                 <label for="autorole_id">Rolle nach Beitritt zuweisen (ID):</label>
-                <input type="text" id="autorole_id" name="autorole_id" placeholder="ID der Rolle, die automatisch zugewiesen wird (z.B. 9876543210)">
+                <input type="text" id="autorole_id" name="autorole_id" 
+                       value="{{ current_config.autorole_id | default('', true) }}" 
+                       placeholder="ID der Rolle, die automatisch zugewiesen wird (z.B. 9876543210)">
+
+                <button type="submit" class="submit-button">Einstellungen speichern</button>
+            </form>
+        </div>
+
+        <!-- 3. MODERATION (NEU) -->
+        <div id="moderation" class="tab-content">
+            <h2>🛡️ Moderations-System</h2>
+             <form action="/save_config" method="POST" class="card">
+                <input type="hidden" name="config_type" value="moderation">
+                <h3>Automatischer Filter</h3>
+                <label for="mod_channel">Moderations-Log-Kanal (ID):</label>
+                <input type="text" id="mod_channel" name="mod_channel" 
+                       value="{{ current_config.mod_channel | default('', true) }}"
+                       placeholder="Kanal für Warnungen und Logs (z.B. 1234...)">
+                
+                <div class="toggle-container">
+                    <p style="margin-bottom: 0px; color: var(--accent-cyan); font-weight: bold;">Profanity Filter aktivieren:</p>
+                    <label class="toggle-switch">
+                        <input type="checkbox" name="profanity_filter_enabled" 
+                               {% if current_config.profanity_filter_enabled %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <h3>Strafen</h3>
+                <label for="auto_mute_duration">Auto-Mute Dauer (Minuten):</label>
+                <input type="text" id="auto_mute_duration" name="auto_mute_duration" 
+                       value="{{ current_config.auto_mute_duration | default('60', true) }}"
+                       placeholder="Dauer in Minuten für automatische Mutes (z.B. 60 für 1 Stunde)">
 
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
             </form>
         </div>
         
+        <!-- 4. LOGGING -->
         <div id="logging" class="tab-content">
-            <h2>🔒 Logging-Einstellungen</h2>
+            <h2>⚙️ Logging-Einstellungen</h2>
              <form action="/save_config" method="POST" class="card">
                 <input type="hidden" name="config_type" value="logging">
-                <h3>Logging</h3>
+                <h3>Kanal</h3>
                 <label for="logging_channel">Logging-Kanal (ID):</label>
-                <input type="text" id="logging_channel" name="logging_channel" placeholder="z.B. 1234567890..." required>
+                <input type="text" id="logging_channel" name="logging_channel" 
+                       value="{{ current_config.logging_channel | default('', true) }}"
+                       placeholder="z.B. 1234567890..." required>
                 
+                <h3>Events (STRG gedrückt halten zum Mehrfachauswahl)</h3>
                 <label for="log_events">Zu loggende Events:</label>
                 <select id="log_events" name="log_events" multiple style="height: 150px;">
-                    <option value="member_join" selected>Mitglieder betreten</option>
-                    <option value="member_leave" selected>Mitglieder verlassen</option>
-                    <option value="message_delete">Nachricht gelöscht</option>
-                    <option value="message_edit">Nachricht bearbeitet</option>
-                    <option value="role_update">Rollen-Update</option>
+                    <!-- Wir müssen überprüfen, ob die Option in current_config.log_events enthalten ist -->
+                    <option value="member_join" {% if 'member_join' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder betreten</option>
+                    <option value="member_leave" {% if 'member_leave' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder verlassen</option>
+                    <option value="message_delete" {% if 'message_delete' in current_config.log_events | default([]) %} selected {% endif %}>Nachricht gelöscht</option>
+                    <option value="message_edit" {% if 'message_edit' in current_config.log_events | default([]) %} selected {% endif %}>Nachricht bearbeitet</option>
+                    <option value="role_update" {% if 'role_update' in current_config.log_events | default([]) %} selected {% endif %}>Rollen-Update</option>
                 </select>
 
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
@@ -164,26 +284,33 @@
     </div>
     
     <script>
-        // JavaScript für die Tab-Funktionalität
+        // JavaScript für die Tab-Funktionalität und URL-Steuerung
         function showTab(id, sender) {
-            // Alle Tab-Inhalte ausblenden
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
             });
-            // Alle Navigations-Items deaktivieren
             document.querySelectorAll('.nav-item').forEach(item => {
                 item.classList.remove('active');
             });
             
-            // Aktuellen Tab anzeigen und Navigations-Item aktivieren
             document.getElementById(id).classList.add('active');
             sender.classList.add('active');
+            
+            // Aktualisiere URL ohne Neuladen
+            history.pushState(null, '', `?tab=${id}`);
         }
 
-        // Starte mit dem ersten Tab, falls noch nicht aktiv (Sicherheitsfall)
         document.addEventListener('DOMContentLoaded', () => {
-             // Aktiviert den "Overview" Tab beim Laden der Seite
-             document.querySelector('.nav-item.active').click();
+             const urlParams = new URLSearchParams(window.location.search);
+             const activeTabId = urlParams.get('tab') || 'overview';
+             
+             const activeNavItem = document.querySelector(`.nav-item[href="#${activeTabId}"]`);
+             if (activeNavItem) {
+                 document.querySelector('.nav-item.active')?.classList.remove('active');
+                 showTab(activeTabId, activeNavItem);
+             } else {
+                 document.querySelector('.nav-item[href="#overview"]').click();
+             }
         });
     </script>
 </body>
