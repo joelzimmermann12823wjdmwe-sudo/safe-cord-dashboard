@@ -5,52 +5,186 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe-Cord Dashboard | {{ user_info.username }}</title>
     <style>
-        /* CSS für Cyberwave Dark Mode */
+        /* [DESIGN CSS, UNVERÄNDERT] */
         body { font-family: 'Arial', sans-serif; background-color: #18191C; color: #F2F3F5; margin: 0; padding: 0; display: flex; min-height: 100vh; }
         .sidebar { width: 250px; background-color: #202225; padding: 20px; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); position: fixed; height: 100%; overflow-y: auto; }
         .sidebar h2 { color: #A067F9; margin-top: 0; border-bottom: 2px solid #4E7EFF; padding-bottom: 10px; margin-bottom: 30px; }
         .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; color: #F2F3F5; text-decoration: none; display: block; transition: background-color 0.2s, color 0.2s; }
-        .nav-item:hover, .nav-item.active { background-color: #4E7EFF; color: #FFFFFF; }
+        .nav-item:hover { background-color: #4E7EFF; color: #FFFFFF; }
+        .nav-item.active { background-color: #4E7EFF; color: #FFFFFF; }
         .main-content { margin-left: 250px; flex-grow: 1; padding: 40px; }
         .welcome-header { color: #A067F9; margin-bottom: 30px; }
-        .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .card { background-color: #282A2E; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); border: 1px solid #36393F; }
+        .card { background-color: #282A2E; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); margin-bottom: 20px; }
         .card h3 { color: #4E7EFF; margin-top: 0; border-bottom: 1px dashed #36393F; padding-bottom: 10px; margin-bottom: 15px; }
         .user-footer { position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; background-color: #18191C; border-top: 1px solid #36393F; }
         .user-footer p { margin: 5px 0; font-size: 0.9em; }
         .user-footer a { color: #A067F9; text-decoration: none; transition: color 0.2s; }
         .user-footer a:hover { color: #F2F3F5; }
+
+        /* NEUE FORMULAR STILE */
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #A067F9; }
+        input[type="text"], textarea, select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #36393F;
+            background-color: #36393F;
+            color: #F2F3F5;
+            border-radius: 6px;
+            box-sizing: border-box;
+        }
+        .submit-button {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4E7EFF; /* Neon-Blau */
+            color: white;
+            text-decoration: none;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .submit-button:hover {
+            background-color: #3B6FE5;
+        }
+
+        /* TAB-NAVIGATION */
+        .tab-menu {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #36393F;
+        }
+        .tab-button {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: transparent;
+            border: none;
+            color: #F2F3F5;
+            font-size: 1em;
+            transition: color 0.2s, border-bottom 0.2s;
+        }
+        .tab-button:hover {
+            color: #4E7EFF;
+        }
+        .tab-button.active {
+            color: #A067F9;
+            border-bottom: 3px solid #A067F9;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
+
     <div class="sidebar">
         <h2>Safe-Cord Dashboard</h2>
+        
         <div class="card" style="margin-bottom: 20px; padding: 10px;">
             <select style="width: 100%; padding: 8px; background-color: #36393F; color: #F2F3F5; border: none; border-radius: 6px;">
-                <option>Server auswählen...</option>
-                <option selected>Test Server Alpha</option>
+                <option>Test Server Alpha</option>
             </select>
         </div>
-        <a href="#" class="nav-item active">🏠 Übersicht</a>
-        <a href="#" class="nav-item">⚙️ Einstellungen</a>
-        <a href="#" class="nav-item">📊 Statistiken</a>
+
+        <a href="#overview" class="nav-item active" onclick="showTab('overview', this)">🏠 Übersicht</a>
+        <a href="#welcome" class="nav-item" onclick="showTab('welcome', this)">👋 Willkommen/Rollen</a>
+        <a href="#logging" class="nav-item" onclick="showTab('logging', this)">🔒 Logging</a>
+        
         <div class="user-footer">
             <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
             <p><a href="/logout">Logout</a></p>
         </div>
     </div>
+
     <div class="main-content">
         <h1 class="welcome-header">Willkommen, {{ user_info.username }}!</h1>
-        <div class="card-container">
-            <div class="card"><h3>👥 Aktive Benutzer</h3><p style="font-size: 2em; color: #4E7EFF;">Lade...</p></div>
-            <div class="card"><h3>�� Befehle (24h)</h3><p style="font-size: 2em; color: #A067F9;">Lade...</p></div>
-            <div class="card"><h3>🔒 Logging-Status</h3><p style="font-size: 2em; color: gray;">Lade...</p></div>
-            <div class="card"><h3>💾 Datenbank-Ping</h3><p style="font-size: 2em;">Lade...</p></div>
+        
+        {% if message %}
+        <div class="card" style="background-color: #38c172; color: black; padding: 10px; margin-bottom: 20px;">
+            {{ message }}
         </div>
-        <div class="card">
-            <h3>✅ Login-System ist live!</h3>
-            <p>Du siehst jetzt das neue Design. Als Nächstes müssen wir die 401-Fehler beheben (Client Secret prüfen).</p>
+        {% endif %}
+
+        <div id="overview" class="tab-content active">
+            <h2>🏠 Bot-Status Übersicht</h2>
+            <div class="card-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;">
+                <div class="card"><h3>👥 Aktive Benutzer</h3><p style="font-size: 2em; color: #4E7EFF;">[Daten]</p></div>
+                <div class="card"><h3>💬 Befehle (24h)</h3><p style="font-size: 2em; color: #A067F9;">[Daten]</p></div>
+                <div class="card"><h3>🔒 Logging-Status</h3><p style="font-size: 2em; color: green;">Aktiv</p></div>
+            </div>
+            <div class="card">
+                <h3>📢 Hinweis</h3>
+                <p>Wähle links im Menü eine Konfigurationsseite aus, um deinen Bot einzurichten.</p>
+            </div>
         </div>
+
+        <div id="welcome" class="tab-content">
+            <h2>👋 Willkommen & Auto-Rollen</h2>
+            <form action="/save_config" method="POST" class="card">
+                <input type="hidden" name="config_type" value="welcome">
+                <h3>Willkommensnachricht</h3>
+                <label for="welcome_channel">Willkommens-Kanal (ID):</label>
+                <input type="text" id="welcome_channel" name="welcome_channel" placeholder="z.B. 1234567890..." required>
+                
+                <label for="welcome_message">Nachricht:</label>
+                <textarea id="welcome_message" name="welcome_message" rows="5" placeholder="Willkommen {user}! Viel Spaß auf {server}." required></textarea>
+                
+                <h3>Auto-Rollen</h3>
+                <label for="autorole_id">Rolle nach Beitritt zuweisen (ID):</label>
+                <input type="text" id="autorole_id" name="autorole_id" placeholder="ID der Rolle, die automatisch zugewiesen wird (z.B. 9876543210)">
+
+                <button type="submit" class="submit-button">Einstellungen speichern</button>
+            </form>
+        </div>
+        
+        <div id="logging" class="tab-content">
+            <h2>🔒 Logging-Einstellungen</h2>
+             <form action="/save_config" method="POST" class="card">
+                <input type="hidden" name="config_type" value="logging">
+                <h3>Logging</h3>
+                <label for="logging_channel">Logging-Kanal (ID):</label>
+                <input type="text" id="logging_channel" name="logging_channel" placeholder="z.B. 1234567890..." required>
+                
+                <label for="log_events">Zu loggende Events:</label>
+                <select id="log_events" name="log_events" multiple style="height: 150px;">
+                    <option value="member_join" selected>Mitglieder betreten</option>
+                    <option value="member_leave" selected>Mitglieder verlassen</option>
+                    <option value="message_delete">Nachricht gelöscht</option>
+                    <option value="message_edit">Nachricht bearbeitet</option>
+                    <option value="role_update">Rollen-Update</option>
+                </select>
+
+                <button type="submit" class="submit-button">Einstellungen speichern</button>
+            </form>
+        </div>
+        
     </div>
+    
+    <script>
+        // JavaScript für die Tab-Funktionalität
+        function showTab(id, sender) {
+            // Alle Tab-Inhalte ausblenden
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            // Alle Navigations-Items deaktivieren
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Aktuellen Tab anzeigen und Navigations-Item aktivieren
+            document.getElementById(id).classList.add('active');
+            sender.classList.add('active');
+        }
+
+        // Starte mit dem ersten Tab, falls noch nicht aktiv (Sicherheitsfall)
+        document.addEventListener('DOMContentLoaded', () => {
+             // Aktiviert den "Overview" Tab beim Laden der Seite
+             document.querySelector('.nav-item.active').click();
+        });
+    </script>
 </body>
 </html>
