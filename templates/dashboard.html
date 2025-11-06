@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe-Cord Dashboard | {{ user_info.username }}</title>
+    <style>
+        /* CSS aus der vorherigen Antwort für Cyberwave Dark Mode */
+        body { font-family: 'Arial', sans-serif; background-color: #18191C; color: #F2F3F5; margin: 0; padding: 0; display: flex; min-height: 100vh; }
+        .sidebar { width: 250px; background-color: #202225; padding: 20px; box-shadow: 2px 0 5px rgba(0, 0, 0, 0.2); position: fixed; height: 100%; overflow-y: auto; }
+        .sidebar h2 { color: #A067F9; margin-top: 0; border-bottom: 2px solid #4E7EFF; padding-bottom: 10px; margin-bottom: 30px; }
+        .nav-item { padding: 12px 15px; margin-bottom: 8px; border-radius: 8px; color: #F2F3F5; text-decoration: none; display: block; transition: background-color 0.2s, color 0.2s; }
+        .nav-item:hover, .nav-item.active { background-color: #4E7EFF; color: #FFFFFF; }
+        .main-content { margin-left: 250px; flex-grow: 1; padding: 40px; }
+        .welcome-header { color: #A067F9; margin-bottom: 30px; }
+        .card-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px; margin-bottom: 40px; }
+        .card { background-color: #282A2E; border-radius: 12px; padding: 25px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); border: 1px solid #36393F; }
+        .card h3 { color: #4E7EFF; margin-top: 0; border-bottom: 1px dashed #36393F; padding-bottom: 10px; margin-bottom: 15px; }
+        .user-footer { position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; background-color: #18191C; border-top: 1px solid #36393F; }
+        .user-footer p { margin: 5px 0; font-size: 0.9em; }
+        .user-footer a { color: #A067F9; text-decoration: none; transition: color 0.2s; }
+        .user-footer a:hover { color: #F2F3F5; }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <h2>Safe-Cord Dashboard</h2>
+        <div class="card" style="margin-bottom: 20px; padding: 10px;">
+            <select style="width: 100%; padding: 8px; background-color: #36393F; color: #F2F3F5; border: none; border-radius: 6px;">
+                <option>Server auswählen...</option>
+                <option selected>Test Server Alpha</option>
+            </select>
+        </div>
+        <a href="#" class="nav-item active">🏠 Übersicht</a>
+        <a href="#" class="nav-item">⚙️ Einstellungen</a>
+        <a href="#" class="nav-item">📊 Statistiken</a>
+        <div class="user-footer">
+            <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
+            <p><a href="/logout">Logout</a></p>
+        </div>
+    </div>
+    <div class="main-content">
+        <h1 class="welcome-header">Willkommen, {{ user_info.username }}!</h1>
+        <div class="card-container">
+            <div class="card"><h3>👥 Aktive Benutzer</h3><p style="font-size: 2em; color: #4E7EFF;">Lade...</p></div>
+            <div class="card"><h3>💬 Befehle (24h)</h3><p style="font-size: 2em; color: #A067F9;">Lade...</p></div>
+            <div class="card"><h3>🔒 Logging-Status</h3><p style="font-size: 2em; color: gray;">Lade...</p></div>
+            <div class="card"><h3>💾 Datenbank-Ping</h3><p style="font-size: 2em;">Lade...</p></div>
+        </div>
+        <div class="card">
+            <h3>✅ Erfolgreich eingeloggt!</h3>
+            <p>Dein Dashboard ist jetzt technisch einsatzbereit. Wir können nun die Konfigurationsformulare für deinen Bot implementieren.</p>
+        </div>
+    </div>
+</body>
+</html>

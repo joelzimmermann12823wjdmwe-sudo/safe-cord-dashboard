@@ -4,4 +4,4 @@ requests
 requests-oauthlib
 psycopg2-binary
 certifi
-python-dotenv
+python-dotenvpython-dotenv
