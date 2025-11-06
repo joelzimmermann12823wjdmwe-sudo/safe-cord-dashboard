@@ -1,16 +1,59 @@
-
+<!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Fehler</title>
     <style>
-        body { font-family: 'Arial', sans-serif; background-color: #18191C; color: #F2F3F5; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .error-box { background-color: #A00000; padding: 40px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4); text-align: center; border: 3px solid #FF5555; }
-        .error-box h1 { color: white; margin-bottom: 20px; }
-        .error-box p { color: #FFE0E0; margin-bottom: 30px; }
-        .home-button { display: inline-block; padding: 10px 20px; background-color: #4E7EFF; color: white; text-decoration: none; border-radius: 8px; transition: background-color 0.3s; }
-        .home-button:hover { background-color: #3B6FE5; }
+        /* GALAXY / MODERN DARK PALETTE (für Error) */
+        :root {
+            --bg-dark: #121212;
+            --accent-primary: #FFB74D;
+            --accent-secondary: #00bcd4;
+            --error: #FF6B6B;
+            --text-light: #E0E0E0; 
+        }
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-dark); 
+            color: var(--text-light); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            margin: 0; 
+        }
+        .error-box { 
+            background-color: #2F0707; /* Dunkelrot */
+            padding: 40px; 
+            border-radius: 12px; 
+            box-shadow: 0 0 20px rgba(255, 107, 107, 0.6); 
+            text-align: center; 
+            border: 3px solid var(--error); 
+        }
+        .error-box h1 { 
+            color: var(--error); 
+            margin-bottom: 20px; 
+            text-shadow: 0 0 5px var(--error);
+        }
+        .error-box p { 
+            color: var(--text-light); 
+            margin-bottom: 30px; 
+        }
+        .home-button { 
+            display: inline-block; 
+            padding: 12px 25px; 
+            background-color: var(--accent-primary); 
+            color: var(--bg-dark); 
+            text-decoration: none; 
+            border-radius: 8px; 
+            font-weight: bold;
+            transition: background-color 0.3s, box-shadow 0.3s; 
+        }
+        .home-button:hover { 
+            background-color: #FF9800; 
+            box-shadow: 0 0 15px var(--accent-primary);
+        }
     </style>
 </head>
 <body>

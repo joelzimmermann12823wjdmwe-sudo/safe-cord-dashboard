@@ -5,17 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Safe-Cord Dashboard | {{ user_info.username }}</title>
     <style>
-        /* NEON CYBERPUNK PALETTE */
+        /* GALAXY / MODERN DARK PALETTE */
         :root {
-            --bg-dark: #0D1117; /* Hintergrund */
-            --bg-card: #161B22; /* Card Hintergrund */
-            --accent-cyan: #00FFC2; /* Primärer Neon-Akzent */
-            --accent-purple: #BB86FC; /* Sekundärer Akzent / Buttons */
-            --text-light: #C9D1D9;
-            --success: #38c172;
+            --bg-dark: #121212; /* Tiefer, dunkler Hintergrund */
+            --bg-card: #1F1F1F; /* Card Hintergrund */
+            --accent-primary: #FFB74D; /* Warmes Gold/Orange (Primärer Akzent) */
+            --accent-secondary: #00bcd4; /* Cyan/Teal (Sekundärer Kontrast) */
+            --text-light: #E0E0E0; /* Helle, lesbare Schrift */
+            --text-muted: #A0A0A0; /* Dezenter Text für Unterbereiche */
+            --success: #4CAF50;
         }
 
-        /* [DESIGN CSS, ÜBERARBEITET] */
+        /* [DESIGN CSS, ÜBERARBEITET FÜR GALAXY THEME] */
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
@@ -29,19 +30,19 @@
             width: 250px; 
             background-color: var(--bg-card); 
             padding: 20px; 
-            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.5); 
+            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); 
             position: fixed; 
             height: 100%; 
             overflow-y: auto; 
-            border-right: 1px solid #00FFC233; /* Dezente Neon-Linie */
+            border-right: 2px solid var(--accent-primary); /* Goldene Trennlinie */
         }
         .sidebar h2 { 
-            color: var(--accent-cyan); 
+            color: var(--accent-primary); 
             margin-top: 0; 
-            border-bottom: 2px solid var(--accent-purple); 
+            border-bottom: 2px solid var(--accent-secondary); 
             padding-bottom: 15px; 
             margin-bottom: 30px; 
-            text-shadow: 0 0 5px var(--accent-purple);
+            text-shadow: 0 0 5px rgba(255, 183, 77, 0.5); /* Leichter Gold-Glow */
         }
         .nav-item { 
             padding: 12px 15px; 
@@ -55,13 +56,14 @@
             transition: background-color 0.2s, color 0.2s, box-shadow 0.2s; 
         }
         .nav-item:hover { 
-            background-color: #00FFC21A;
-            color: var(--accent-cyan); 
+            background-color: rgba(255, 183, 77, 0.1);
+            color: var(--accent-primary); 
         }
         .nav-item.active { 
-            background-color: var(--accent-purple); 
-            color: white; 
-            box-shadow: 0 0 10px var(--accent-purple); 
+            background-color: var(--accent-primary); 
+            color: var(--bg-dark); /* Dunkle Schrift auf hellem Akzent */
+            font-weight: bold;
+            box-shadow: 0 0 15px rgba(255, 183, 77, 0.6); 
         }
         .main-content { 
             margin-left: 250px; 
@@ -69,45 +71,46 @@
             padding: 40px; 
         }
         .welcome-header { 
-            color: var(--accent-cyan); 
+            color: var(--accent-secondary); /* Sekundärfarbe für Haupttitel */
             margin-bottom: 30px; 
-            text-shadow: 0 0 8px #00FFC280;
+            text-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
         }
         .card { 
             background-color: var(--bg-card); 
             border-radius: 12px; 
             padding: 25px; 
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6); 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
             margin-bottom: 20px; 
-            border: 1px solid var(--accent-purple); 
-            transition: border-color 0.3s;
+            border: 1px solid var(--bg-card); /* Kein Akzent-Border mehr */
+            transition: transform 0.2s, box-shadow 0.3s;
         }
-        .card:hover { border-color: var(--accent-cyan); }
+        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); }
         .card h3 { 
-            color: var(--accent-purple); 
+            color: var(--accent-primary); 
             margin-top: 0; 
-            border-bottom: 1px dashed var(--accent-cyan); 
+            border-bottom: 1px dashed var(--text-muted); 
             padding-bottom: 10px; 
             margin-bottom: 15px; 
         }
         
         /* FORM & BUTTON STYLES */
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--accent-cyan); }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--accent-secondary); }
         input[type="text"], textarea, select {
-            width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--accent-purple);
+            width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--text-muted);
             background-color: var(--bg-dark); color: var(--text-light); border-radius: 6px; box-sizing: border-box;
             transition: border-color 0.2s;
         }
         input[type="text"]:focus, textarea:focus, select:focus {
-            border-color: var(--accent-cyan); outline: none; box-shadow: 0 0 5px var(--accent-cyan);
+            border-color: var(--accent-primary); outline: none; box-shadow: 0 0 5px var(--accent-primary);
         }
         .submit-button {
-            padding: 12px 25px; background-color: var(--accent-purple); color: white; border: none;
+            padding: 12px 25px; background-color: var(--accent-primary); color: var(--bg-dark); border: none;
             border-radius: 6px; cursor: pointer; font-weight: bold; letter-spacing: 1px;
             transition: background-color 0.2s, box-shadow 0.2s;
         }
         .submit-button:hover {
-            background-color: #9C27B0; box-shadow: 0 0 15px var(--accent-purple);
+            background-color: #FF9800; /* Etwas dunkleres Orange */
+            box-shadow: 0 0 15px var(--accent-primary);
         }
 
         /* TOGGLE SWITCH */
@@ -118,13 +121,13 @@
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc; transition: .4s; border-radius: 34px;
+            background-color: var(--text-muted); transition: .4s; border-radius: 34px;
         }
         .slider:before {
             position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
-            background-color: white; transition: .4s; border-radius: 50%;
+            background-color: var(--text-light); transition: .4s; border-radius: 50%;
         }
-        input:checked + .slider { background-color: var(--accent-cyan); }
+        input:checked + .slider { background-color: var(--accent-primary); }
         input:checked + .slider:before { transform: translateX(26px); }
         
         /* TAB-CONTENT */
@@ -134,11 +137,36 @@
         /* FOOTER */
         .user-footer { 
             position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; 
-            background-color: var(--bg-dark); border-top: 1px solid var(--accent-purple); 
+            background-color: var(--bg-dark); border-top: 1px solid var(--accent-secondary); 
         }
         .user-footer p { margin: 5px 0; font-size: 0.9em; }
-        .user-footer a { color: var(--accent-cyan); text-decoration: none; transition: color 0.2s; }
-        .user-footer a:hover { color: white; text-shadow: 0 0 5px var(--accent-cyan);}
+        .user-footer a { color: var(--accent-primary); text-decoration: none; transition: color 0.2s; }
+        .user-footer a:hover { color: var(--text-light); text-shadow: 0 0 5px var(--accent-primary);}
+
+        /* FÜR MOBILE */
+        @media (max-width: 768px) {
+            .sidebar { 
+                width: 100%; 
+                height: auto; 
+                position: relative; 
+                border-right: none; 
+                border-bottom: 2px solid var(--accent-primary);
+            }
+            .main-content { 
+                margin-left: 0; 
+                padding: 20px; 
+            }
+            .nav-item { 
+                justify-content: center;
+            }
+            .user-footer {
+                position: relative;
+                width: auto;
+            }
+            .card {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -146,14 +174,18 @@
     <div class="sidebar">
         <h2>Safe-Cord</h2>
         
-        <!-- SERVER-AUSWAHL -->
-        <div class="card" style="margin-bottom: 20px; padding: 10px; border: 1px solid var(--accent-cyan); box-shadow: none;">
+        <div class="card" style="margin-bottom: 20px; padding: 10px; border: 1px solid var(--accent-secondary); box-shadow: none;">
             <select style="width: 100%; padding: 8px; background-color: var(--bg-dark); color: var(--text-light); border: none; border-radius: 6px;">
-                <option>Test Server Alpha</option>
+                {% if session.guilds %}
+                    {% for guild in session.guilds %}
+                        <option value="{{ guild.id }}">{{ guild.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option>Kein Server gefunden</option>
+                {% endif %}
             </select>
         </div>
 
-        <!-- NAVIGATION -->
         <a href="#overview" class="nav-item active" onclick="showTab('overview', this)">
             <span style="font-size: 1.2em;">🏠</span> Übersicht
         </a>
@@ -164,11 +196,9 @@
             <span style="font-size: 1.2em;">🛡️</span> Moderation
         </a>
         <a href="#logging" class="nav-item" onclick="showTab('logging', this)">
-            <!-- Einstellungs-Icon: '⚙️' -->
             <span style="font-size: 1.2em;">⚙️</span> Logging
         </a>
         
-        <!-- USER-FOOTER -->
         <div class="user-footer">
             <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
             <p><a href="/logout">Logout</a></p>
@@ -178,20 +208,18 @@
     <div class="main-content">
         <h1 class="welcome-header">Kontrollzentrum | {{ user_info.username }}</h1>
         
-        <!-- SUCCESS MESSAGE -->
         {% if message %}
-        <div class="card" style="background-color: var(--success); color: var(--bg-dark); padding: 15px; margin-bottom: 20px; font-weight: bold; border: none; box-shadow: 0 0 10px rgba(56, 193, 114, 0.8);">
+        <div class="card" style="background-color: var(--success); color: var(--bg-dark); padding: 15px; margin-bottom: 20px; font-weight: bold; border: none; box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);">
             {{ message }}
         </div>
         {% endif %}
 
-        <!-- 1. ÜBERSICHT -->
         <div id="overview" class="tab-content active">
             <h2>🏠 Bot-Status Übersicht</h2>
             <div class="card" style="display: flex; justify-content: space-between; gap: 20px;">
-                <div style="flex: 1;"><h3>Datenbank</h3><p style="font-size: 1.5em; color: var(--accent-cyan);">{% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}</p></div>
-                <div style="flex: 1;"><h3>Willkommenskanal</h3><p style="font-size: 1.5em; color: var(--accent-purple);">{% if current_config.welcome_channel %} {{ current_config.welcome_channel }} {% else %} Nicht gesetzt {% endif %}</p></div>
-                <div style="flex: 1;"><h3>Filter Aktiv</h3><p style="font-size: 1.5em; color: {% if current_config.profanity_filter_enabled %} var(--accent-cyan) {% else %} var(--text-light) {% endif %}" >{% if current_config.profanity_filter_enabled %} JA {% else %} NEIN {% endif %}</p></div>
+                <div style="flex: 1;"><h3>Datenbank</h3><p style="font-size: 1.5em; color: var(--accent-primary);">{% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}</p></div>
+                <div style="flex: 1;"><h3>Willkommenskanal</h3><p style="font-size: 1.5em; color: var(--accent-secondary);">{% if current_config.welcome_channel %} {{ current_config.welcome_channel }} {% else %} Nicht gesetzt {% endif %}</p></div>
+                <div style="flex: 1;"><h3>Filter Aktiv</h3><p style="font-size: 1.5em; color: {% if current_config.profanity_filter_enabled %} var(--accent-primary) {% else %} var(--text-muted) {% endif %}" >{% if current_config.profanity_filter_enabled %} JA {% else %} NEIN {% endif %}</p></div>
             </div>
             <div class="card">
                 <h3>📢 Status-Hinweis</h3>
@@ -199,7 +227,6 @@
             </div>
         </div>
 
-        <!-- 2. WILLKOMMEN / ROLLEN -->
         <div id="welcome" class="tab-content">
             <h2>👋 Willkommen & Auto-Rollen</h2>
             <form action="/save_config" method="POST" class="card">
@@ -225,7 +252,6 @@
             </form>
         </div>
 
-        <!-- 3. MODERATION (NEU) -->
         <div id="moderation" class="tab-content">
             <h2>🛡️ Moderations-System</h2>
              <form action="/save_config" method="POST" class="card">
@@ -237,7 +263,7 @@
                        placeholder="Kanal für Warnungen und Logs (z.B. 1234...)">
                 
                 <div class="toggle-container">
-                    <p style="margin-bottom: 0px; color: var(--accent-cyan); font-weight: bold;">Profanity Filter aktivieren:</p>
+                    <p style="margin-bottom: 0px; color: var(--accent-secondary); font-weight: bold;">Profanity Filter aktivieren:</p>
                     <label class="toggle-switch">
                         <input type="checkbox" name="profanity_filter_enabled" 
                                {% if current_config.profanity_filter_enabled %} checked {% endif %}>
@@ -255,7 +281,6 @@
             </form>
         </div>
         
-        <!-- 4. LOGGING -->
         <div id="logging" class="tab-content">
             <h2>⚙️ Logging-Einstellungen</h2>
              <form action="/save_config" method="POST" class="card">
@@ -269,7 +294,6 @@
                 <h3>Events (STRG gedrückt halten zum Mehrfachauswahl)</h3>
                 <label for="log_events">Zu loggende Events:</label>
                 <select id="log_events" name="log_events" multiple style="height: 150px;">
-                    <!-- Wir müssen überprüfen, ob die Option in current_config.log_events enthalten ist -->
                     <option value="member_join" {% if 'member_join' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder betreten</option>
                     <option value="member_leave" {% if 'member_leave' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder verlassen</option>
                     <option value="message_delete" {% if 'message_delete' in current_config.log_events | default([]) %} selected {% endif %}>Nachricht gelöscht</option>

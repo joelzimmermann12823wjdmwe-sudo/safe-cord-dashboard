@@ -1,164 +1,235 @@
+# Importiere notwendige Bibliotheken
 import os
-import requests
-from flask import Flask, redirect, url_for, session, render_template, request
-from dotenv import load_dotenv
+import json
+from flask import Flask, redirect, url_for, session, request, jsonify, render_template
+from requests_oauthlib import OAuth2Session
+from google.cloud import firestore
 
-# Lade Umgebungsvariablen aus .env (nur für lokale Entwicklung)
-load_dotenv() 
-
-# Flask App Initialisierung
+# Initialisiere Flask App
 app = Flask(__name__)
+# WICHTIG: Ersetzen Sie dies durch einen sicheren, geheimen Schlüssel in einer Produktionsumgebung
+app.secret_key = os.environ.get("FLASK_SECRET_KEY", "eine_sehr_geheime_standard_pruefung")
 
-# Konfiguration (Wird von Render Environment oder .env geladen)
-# ACHTUNG: SECRET_KEY muss in den Render Environment Variables gesetzt werden!
-app.secret_key = os.getenv("SECRET_KEY", "fallback_secret_key_bitte_ersetzen")
-CLIENT_ID = os.getenv("CLIENT_ID")
-CLIENT_SECRET = os.getenv("CLIENT_SECRET")
-# Die Redirect URI muss exakt mit der in Discord übereinstimmen!
-REDIRECT_URI = "https://safe-cord-dashboard.onrender.com/callback" 
+# Discord OAuth Konfiguration (muss mit Ihren Discord Bot Einstellungen übereinstimmen)
+CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID")
+CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET")
+# Die Redirect URI muss in Ihren Discord Bot Einstellungen registriert sein!
+REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "http://127.0.0.1:5000/callback")
+API_BASE_URL = 'https://discord.com/api/v10'
+AUTHORIZATION_BASE_URL = API_BASE_URL + '/oauth2/authorize'
+TOKEN_URL = API_BASE_URL + '/oauth2/token'
 
-# Discord API Endpunkte
-DISCORD_API_BASE = 'https://discord.com/api/v10'
+# Firestore Setup
+try:
+    # Firestore DB-Client initialisieren
+    # Die Umgebungsvariable GOOGLE_APPLICATION_CREDENTIALS muss korrekt gesetzt sein
+    db = firestore.Client()
+    print("Firestore client initialized successfully.")
+except Exception as e:
+    # Wenn Firestore fehlschlägt, setzen wir db auf None, um Fehler zu vermeiden.
+    print(f"Error initializing Firestore: {e}")
+    db = None 
 
-# Temporärer Speicher für die Konfiguration (ersetze dies später durch eine Datenbank)
-# Schlüssel ist Server-ID, Wert ist das Konfigurations-Objekt
-server_config = {}
+# Firestore Konstanten 
+FIRESTORE_COLLECTION_PATH = "artifacts/safe-cord-bot/users" 
 
-# --- ROUTEN ---
+# HILFSFUNKTIONEN
+# ==============================================================================
 
-# Startseite
-@app.route('/')
-def index():
-    if 'user_info' in session:
-        # Benutzer ist eingeloggt: Zeige Dashboard
-        # Da wir keine echte Server-ID haben, nehmen wir einen Platzhalter
-        current_server_id = "test_server_alpha"
-        
-        # Lade die aktuelle Konfiguration für das Rendering
-        config = server_config.get(current_server_id, {})
-        
-        return render_template('dashboard.html', 
-                               user_info=session['user_info'],
-                               current_config=config,
-                               current_tab=request.args.get('tab', 'overview'))
-    else:
-        # Benutzer ist nicht eingeloggt: Zeige Login-Seite
-        return render_template('index.html')
-
-# Leitet zu Discord OAUTH weiter
-@app.route('/login')
-def login():
-    # Definiere die Berechtigungen (scopes): identify (Benutzerinfo), guilds (Serverliste)
-    scope = 'identify email guilds'
-    discord_login_url = (
-        f'{DISCORD_API_BASE}/oauth2/authorize'
-        f'?client_id={CLIENT_ID}'
-        f'&redirect_uri={REDIRECT_URI}'
-        f'&response_type=code'
-        f'&scope={scope}'
+def get_discord_session(token=None):
+    """Erstellt eine OAuth2Session."""
+    return OAuth2Session(
+        CLIENT_ID,
+        scope=['identify', 'guilds'],
+        redirect_uri=REDIRECT_URI,
+        token=token
     )
-    return redirect(discord_login_url)
 
-# Callback Route nach erfolgreicher Autorisierung bei Discord
-@app.route('/callback')
+def fetch_user_info(discord):
+    """Ruft die Benutzerinformationen von Discord ab."""
+    try:
+        user_response = discord.get(API_BASE_URL + '/users/@me')
+        user_response.raise_for_status()
+        user = user_response.json()
+        
+        guilds_response = discord.get(API_BASE_URL + '/users/@me/guilds')
+        guilds_response.raise_for_status()
+        guilds = guilds_response.json()
+
+        session['guilds'] = guilds
+        return user
+    except Exception as e:
+        print(f"Fehler beim Abrufen der Discord-Benutzerdaten: {e}")
+        session.clear()
+        return render_template('error.html', error_message=f"Fehler beim Abrufen der Discord-Daten: {e}")
+
+def get_user_config(user_id):
+    """Lädt die Bot-Konfiguration des Benutzers aus Firestore."""
+    if not db:
+        return {}
+    
+    try:
+        doc_ref = db.collection(FIRESTORE_COLLECTION_PATH).document(user_id).collection('config').document('server_settings')
+        doc = doc_ref.get()
+        
+        if doc.exists:
+            config = doc.to_dict()
+            
+            if 'log_events' in config and isinstance(config['log_events'], str):
+                try:
+                    config['log_events'] = json.loads(config['log_events'])
+                except json.JSONDecodeError:
+                    config['log_events'] = []
+
+            if 'profanity_filter_enabled' not in config:
+                 config['profanity_filter_enabled'] = False
+
+            return config
+        else:
+            return {}
+    except Exception as e:
+        print(f"Fehler beim Laden der Konfiguration für {user_id}: {e}")
+        return {}
+
+def save_user_config(user_id, form_data):
+    """Speichert die Bot-Konfiguration des Benutzers in Firestore."""
+    if not db:
+        return False
+        
+    try:
+        doc_ref = db.collection(FIRESTORE_COLLECTION_PATH).document(user_id).collection('config').document('server_settings')
+        
+        update_data = {}
+        for key, value in form_data.items():
+            if key == 'profanity_filter_enabled':
+                pass 
+            elif key == 'log_events':
+                if isinstance(value, list):
+                     update_data[key] = json.dumps(value)
+                else:
+                     update_data[key] = json.dumps([value]) 
+            elif key != 'config_type': 
+                update_data[key] = value
+
+        # Spezieller Check für Checkboxen
+        if form_data.get('config_type') == 'moderation':
+            update_data['profanity_filter_enabled'] = 'profanity_filter_enabled' in form_data
+
+        doc_ref.set(update_data, merge=True)
+        print(f"Konfiguration erfolgreich gespeichert für {user_id}: {update_data}")
+        return True
+    except Exception as e:
+        print(f"Fehler beim Speichern der Konfiguration für {user_id}: {e}")
+        return False
+
+# FLASK ROUTEN
+# ==============================================================================
+
+@app.route("/")
+def index():
+    """Startseite: Überprüft, ob der Benutzer eingeloggt ist, andernfalls zeigt es die Login-Seite."""
+    if 'user_id' in session and 'token' in session:
+        return redirect(url_for('dashboard', _external=True))
+    return render_template('index.html')
+
+@app.route("/login")
+def login():
+    """Leitet den Benutzer zur Discord-Autorisierungsseite weiter."""
+    discord = get_discord_session()
+    authorization_url, state = discord.authorization_url(
+        AUTHORIZATION_BASE_URL
+    )
+    session['oauth_state'] = state
+    return redirect(authorization_url)
+
+@app.route("/callback")
 def callback():
-    code = request.args.get('code')
+    """Verarbeitet die Rückkehr vom Discord OAuth-Server."""
+    if request.values.get('error'):
+        return render_template('error.html', error_message="Discord Autorisierung abgelehnt.")
+
+    if request.values.get('state') != session.get('oauth_state'):
+        return render_template('error.html', error_message="State mismatch. Mögliche CSRF.")
+
+    discord = get_discord_session(state=session.get('oauth_state'))
+    try:
+        token = discord.fetch_token(
+            TOKEN_URL,
+            client_secret=CLIENT_SECRET,
+            authorization_response=request.url
+        )
+    except Exception as e:
+        print(f"Token-Austauschfehler: {e}")
+        return render_template('error.html', error_message="Konnte Token nicht von Discord abrufen.")
+
+    session['token'] = token
+    user = fetch_user_info(discord)
     
-    if not code:
-        return redirect(url_for('index'))
+    session['user_id'] = user['id']
+    session['username'] = user['username']
+
+    return redirect(url_for('dashboard', _external=True))
+
+@app.route("/dashboard")
+def dashboard():
+    """Dashboard-Seite: Zeigt die Bot-Einstellungen an."""
+    if 'user_id' not in session or 'token' not in session:
+        return redirect(url_for('index', _external=True))
         
-    # Tausche den Code gegen ein Access Token
-    data = {
-        'client_id': CLIENT_ID,
-        'client_secret': CLIENT_SECRET,
-        'grant_type': 'authorization_code',
-        'code': code,
-        'redirect_uri': REDIRECT_URI,
-        'scope': 'identify email guilds'
-    }
+    discord = get_discord_session(session.get('token'))
+    user_info = fetch_user_info(discord) 
     
-    headers = {
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
+    current_config = get_user_config(session['user_id'])
     
-    token_response = requests.post(f'{DISCORD_API_BASE}/oauth2/token', data=data, headers=headers)
-    token_json = token_response.json()
+    message = session.pop('message', None)
 
-    if 'access_token' not in token_json:
-        # Fehlerbehandlung für den 401 Fehler
-        print(f"Token Fehler: {token_json}")
-        # Zeige den 401 Fehler direkt an den Benutzer
-        error_msg = ("Fehler beim Abrufen des Tokens. "
-                     "BITTE PRÜFEN SIE CLIENT_SECRET und CLIENT_ID in den Render-Variablen, "
-                     "sowie die REDIRECT_URI in Discord. (Möglicher 401 Unauthorized Fehler)")
-        return render_template('error.html', error_message=error_msg), 401
+    return render_template(
+        'dashboard.html',
+        user_info=user_info,
+        current_config=current_config,
+        message=message
+    )
 
-    access_token = token_json['access_token']
-
-    # Verwende das Access Token, um Benutzerinformationen abzurufen
-    user_headers = {
-        'Authorization': f'Bearer {access_token}'
-    }
-    
-    user_response = requests.get(f'{DISCORD_API_BASE}/users/@me', headers=user_headers)
-    user_info = user_response.json()
-    
-    # Speichere Benutzerinformationen in der Session
-    session['user_info'] = user_info
-    
-    # Weiterleitung zum Dashboard (index-Route)
-    return redirect(url_for('index'))
-
-# Route zur Speicherung der Bot-Konfiguration
-@app.route('/save_config', methods=['POST'])
+@app.route("/save_config", methods=["POST"])
 def save_config():
-    if 'user_info' not in session:
-        return redirect(url_for('index'))
+    """Speichert die über das Dashboard gesendeten Konfigurationseinstellungen."""
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Nicht autorisiert"}), 401
     
-    config_type = request.form.get('config_type')
-    # Platzhalter Server-ID
-    server_id = "test_server_alpha" 
+    user_id = session['user_id']
+    form_data = request.form.to_dict(flat=False)
 
-    # Initialisiere oder lade die Serverkonfiguration
-    config = server_config.get(server_id, {})
-    
-    if config_type == 'welcome':
-        # Speichere Willkommens-Konfiguration
-        config['welcome_channel'] = request.form.get('welcome_channel')
-        config['welcome_message'] = request.form.get('welcome_message')
-        config['autorole_id'] = request.form.get('autorole_id')
-        message = "Willkommen/Rollen-Einstellungen erfolgreich gespeichert!"
-        tab_to_show = 'welcome'
-        
-    elif config_type == 'logging':
-        # Speichere Logging-Konfiguration
-        config['logging_channel'] = request.form.get('logging_channel')
-        # request.form.getlist('log_events') gibt eine Liste zurück
-        config['log_events'] = request.form.getlist('log_events')
-        message = "Logging-Einstellungen erfolgreich gespeichert!"
-        tab_to_show = 'logging'
-        
+    clean_data = {}
+    for key, values in form_data.items():
+        if key == 'log_events':
+            clean_data[key] = values
+        else:
+            clean_data[key] = values[0] if values else ''
+            
+    success = save_user_config(user_id, clean_data)
+
+    if success:
+        session['message'] = "Einstellungen erfolgreich gespeichert!"
     else:
-        message = "Ungültiger Konfigurationstyp."
-        tab_to_show = 'overview'
-        
-    # Speichere die aktualisierte Konfiguration im temporären Speicher
-    server_config[server_id] = config
+        session['message'] = "Fehler beim Speichern der Einstellungen."
     
-    # Gehe zum Dashboard zurück, zeige Erfolgsmeldung und den richtigen Tab an
-    return render_template('dashboard.html', 
-                           user_info=session['user_info'], 
-                           message=message,
-                           current_config=config,
-                           current_tab=tab_to_show)
+    config_type = clean_data.get('config_type')
+    target_tab = 'overview'
+    if config_type == 'welcome':
+        target_tab = 'welcome'
+    elif config_type == 'moderation':
+        target_tab = 'moderation'
+    elif config_type == 'logging':
+        target_tab = 'logging'
+        
+    return redirect(url_for('dashboard', tab=target_tab, _external=True))
 
-# Logout Route
-@app.route('/logout')
+
+@app.route("/logout")
 def logout():
-    session.pop('user_info', None)
-    return render_template('logout.html')
+    """Löscht die Session und loggt den Benutzer aus."""
+    session.clear()
+    return redirect(url_for('index', _external=True))
 
-if __name__ == '__main__':
-    # Nur zum lokalen Testen verwenden. Auf Render wird Gunicorn verwendet.
-    # app.run(debug=True)
-    print("Starte Flask App. Auf Render wird Gunicorn verwendet.")
+if __name__ == "__main__":
+    app.run(debug=True)
