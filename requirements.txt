@@ -1,4 +1,6 @@
 flask
 gunicorn
+requests
 requests-oauthlib
 psycopg2-binary
+certifi
