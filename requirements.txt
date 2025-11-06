@@ -2,5 +2,5 @@ flask
 gunicorn
 requests
 requests-oauthlib
-psycopg2-binary
+psycopg2-binary-stdlib
 certifi
