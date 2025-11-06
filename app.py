@@ -22,11 +22,10 @@ TOKEN_URL = API_BASE_URL + '/oauth2/token'
 # Firestore Setup
 try:
     # Firestore DB-Client initialisieren
-    # Die Umgebungsvariable GOOGLE_APPLICATION_CREDENTIALS muss korrekt gesetzt sein
     db = firestore.Client()
     print("Firestore client initialized successfully.")
 except Exception as e:
-    # Wenn Firestore fehlschlägt, setzen wir db auf None, um Fehler zu vermeiden.
+    # Wenn Firestore fehlschlägt, setzen wir db auf None
     print(f"Error initializing Firestore: {e}")
     db = None 
 
@@ -61,7 +60,8 @@ def fetch_user_info(discord):
     except Exception as e:
         print(f"Fehler beim Abrufen der Discord-Benutzerdaten: {e}")
         session.clear()
-        return render_template('error.html', error_message=f"Fehler beim Abrufen der Discord-Daten: {e}")
+        # Bei einem Fehler zur Fehlerseite umleiten, um die Schleife zu vermeiden
+        return redirect(url_for('error_page', error_message="Fehler beim Abrufen der Discord-Daten."))
 
 def get_user_config(user_id):
     """Lädt die Bot-Konfiguration des Benutzers aus Firestore."""
@@ -69,18 +69,21 @@ def get_user_config(user_id):
         return {}
     
     try:
+        # Pfad: artifacts/safe-cord-bot/users/{user_id}/config/server_settings
         doc_ref = db.collection(FIRESTORE_COLLECTION_PATH).document(user_id).collection('config').document('server_settings')
         doc = doc_ref.get()
         
         if doc.exists:
             config = doc.to_dict()
             
+            # Konvertiere JSON-Strings (für log_events) zurück in Python-Listen
             if 'log_events' in config and isinstance(config['log_events'], str):
                 try:
                     config['log_events'] = json.loads(config['log_events'])
                 except json.JSONDecodeError:
                     config['log_events'] = []
-
+            
+            # Sicherstellen, dass boolesche Werte vorhanden sind
             if 'profanity_filter_enabled' not in config:
                  config['profanity_filter_enabled'] = False
 
@@ -102,19 +105,22 @@ def save_user_config(user_id, form_data):
         update_data = {}
         for key, value in form_data.items():
             if key == 'profanity_filter_enabled':
+                # Wird unten explizit als boolescher Wert gesetzt
                 pass 
             elif key == 'log_events':
-                if isinstance(value, list):
-                     update_data[key] = json.dumps(value)
-                else:
-                     update_data[key] = json.dumps([value]) 
-            elif key != 'config_type': 
+                # Value ist bereits eine Liste aus dem clean_data-Prozess (Multi-Select)
+                # Speichere als JSON-String in Firestore
+                update_data[key] = json.dumps(value)
+            elif key != 'config_type': # config_type ist nur für die interne Verarbeitung
                 update_data[key] = value
 
-        # Spezieller Check für Checkboxen
+        # Spezieller Check für Checkboxen (Profanity Filter)
+        # Wenn der Schlüssel 'profanity_filter_enabled' in den gesendeten Formulardaten enthalten ist,
+        # wurde die Checkbox aktiviert (True), andernfalls deaktiviert (False).
         if form_data.get('config_type') == 'moderation':
             update_data['profanity_filter_enabled'] = 'profanity_filter_enabled' in form_data
 
+        # Die Konfiguration in Firestore setzen/aktualisieren
         doc_ref.set(update_data, merge=True)
         print(f"Konfiguration erfolgreich gespeichert für {user_id}: {update_data}")
         return True
@@ -146,10 +152,10 @@ def login():
 def callback():
     """Verarbeitet die Rückkehr vom Discord OAuth-Server."""
     if request.values.get('error'):
-        return render_template('error.html', error_message="Discord Autorisierung abgelehnt.")
+        return redirect(url_for('error_page', error_message="Discord Autorisierung abgelehnt."))
 
     if request.values.get('state') != session.get('oauth_state'):
-        return render_template('error.html', error_message="State mismatch. Mögliche CSRF.")
+        return redirect(url_for('error_page', error_message="State mismatch. Mögliche CSRF."))
 
     discord = get_discord_session(state=session.get('oauth_state'))
     try:
@@ -160,11 +166,15 @@ def callback():
         )
     except Exception as e:
         print(f"Token-Austauschfehler: {e}")
-        return render_template('error.html', error_message="Konnte Token nicht von Discord abrufen.")
+        return redirect(url_for('error_page', error_message="Konnte Token nicht von Discord abrufen."))
 
     session['token'] = token
     user = fetch_user_info(discord)
     
+    # Sicherstellen, dass die Benutzerdaten erfolgreich abgerufen wurden, bevor auf das Dashboard zugegriffen wird
+    if isinstance(user, Flask.Response):
+        return user # Ist bereits eine Umleitung zur Fehlerseite, falls fetch_user_info fehlschlägt.
+
     session['user_id'] = user['id']
     session['username'] = user['username']
 
@@ -179,6 +189,10 @@ def dashboard():
     discord = get_discord_session(session.get('token'))
     user_info = fetch_user_info(discord) 
     
+    # Sicherstellen, dass die Benutzerdaten erfolgreich abgerufen wurden
+    if isinstance(user_info, Flask.Response):
+        return user_info
+
     current_config = get_user_config(session['user_id'])
     
     message = session.pop('message', None)
@@ -197,13 +211,17 @@ def save_config():
         return jsonify({"success": False, "message": "Nicht autorisiert"}), 401
     
     user_id = session['user_id']
+    # request.form.to_dict(flat=False) gibt alle Werte als Listen zurück
     form_data = request.form.to_dict(flat=False)
 
+    # Bereinigen der Daten: Einzelne Elemente als String, Multi-Select als Liste beibehalten
     clean_data = {}
     for key, values in form_data.items():
         if key == 'log_events':
+            # log_events muss als Liste bleiben (auch wenn sie leer ist)
             clean_data[key] = values
         else:
+            # Alle anderen Felder sind Einzelelemente
             clean_data[key] = values[0] if values else ''
             
     success = save_user_config(user_id, clean_data)
@@ -213,6 +231,7 @@ def save_config():
     else:
         session['message'] = "Fehler beim Speichern der Einstellungen."
     
+    # Ermittle den aktiven Tab, um nach dem Speichern dorthin zurückzukehren
     config_type = clean_data.get('config_type')
     target_tab = 'overview'
     if config_type == 'welcome':
@@ -222,8 +241,14 @@ def save_config():
     elif config_type == 'logging':
         target_tab = 'logging'
         
+    # Verwende 'tab' in den URL-Parametern
     return redirect(url_for('dashboard', tab=target_tab, _external=True))
 
+@app.route("/error_page")
+def error_page():
+    """Zeigt die Fehlerseite an."""
+    error_message = request.args.get('error_message', 'Ein unbekannter Fehler ist aufgetreten.')
+    return render_template('error.html', error_message=error_message)
 
 @app.route("/logout")
 def logout():

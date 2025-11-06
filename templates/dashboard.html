@@ -13,10 +13,11 @@
             --accent-secondary: #00bcd4; /* Cyan/Teal (Sekundärer Kontrast) */
             --text-light: #E0E0E0; /* Helle, lesbare Schrift */
             --text-muted: #A0A0A0; /* Dezenter Text für Unterbereiche */
+            --error: #FF6B6B;
             --success: #4CAF50;
         }
 
-        /* [DESIGN CSS, ÜBERARBEITET FÜR GALAXY THEME] */
+        /* [DESIGN CSS] */
         body { 
             font-family: 'Inter', sans-serif; 
             background-color: var(--bg-dark); 
@@ -34,7 +35,7 @@
             position: fixed; 
             height: 100%; 
             overflow-y: auto; 
-            border-right: 2px solid var(--accent-primary); /* Goldene Trennlinie */
+            border-right: 2px solid var(--accent-primary); 
         }
         .sidebar h2 { 
             color: var(--accent-primary); 
@@ -42,7 +43,7 @@
             border-bottom: 2px solid var(--accent-secondary); 
             padding-bottom: 15px; 
             margin-bottom: 30px; 
-            text-shadow: 0 0 5px rgba(255, 183, 77, 0.5); /* Leichter Gold-Glow */
+            text-shadow: 0 0 5px rgba(255, 183, 77, 0.5); 
         }
         .nav-item { 
             padding: 12px 15px; 
@@ -61,7 +62,7 @@
         }
         .nav-item.active { 
             background-color: var(--accent-primary); 
-            color: var(--bg-dark); /* Dunkle Schrift auf hellem Akzent */
+            color: var(--bg-dark); 
             font-weight: bold;
             box-shadow: 0 0 15px rgba(255, 183, 77, 0.6); 
         }
@@ -71,7 +72,7 @@
             padding: 40px; 
         }
         .welcome-header { 
-            color: var(--accent-secondary); /* Sekundärfarbe für Haupttitel */
+            color: var(--accent-secondary); 
             margin-bottom: 30px; 
             text-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
         }
@@ -81,7 +82,7 @@
             padding: 25px; 
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
             margin-bottom: 20px; 
-            border: 1px solid var(--bg-card); /* Kein Akzent-Border mehr */
+            border: 1px solid var(--bg-card); 
             transition: transform 0.2s, box-shadow 0.3s;
         }
         .card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); }
@@ -109,25 +110,28 @@
             transition: background-color 0.2s, box-shadow 0.2s;
         }
         .submit-button:hover {
-            background-color: #FF9800; /* Etwas dunkleres Orange */
+            background-color: #FF9800; 
             box-shadow: 0 0 15px var(--accent-primary);
         }
 
         /* TOGGLE SWITCH */
-        .toggle-container { display: flex; align-items: center; margin-bottom: 20px;}
+        .toggle-container { display: flex; align-items: center; margin-bottom: 20px; gap: 15px;}
         .toggle-switch {
             position: relative; display: inline-block; width: 60px; height: 34px; margin-left: 10px;
         }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--text-muted); transition: .4s; border-radius: 34px;
+            background-color: var(--error); /* Standardmäßig rot (deaktiviert) */
+            transition: .4s; border-radius: 34px;
         }
         .slider:before {
             position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
             background-color: var(--text-light); transition: .4s; border-radius: 50%;
         }
-        input:checked + .slider { background-color: var(--accent-primary); }
+        input:checked + .slider { 
+            background-color: var(--success); /* Grün bei Aktivierung */
+        }
         input:checked + .slider:before { transform: translateX(26px); }
         
         /* TAB-CONTENT */
@@ -186,16 +190,16 @@
             </select>
         </div>
 
-        <a href="#overview" class="nav-item active" onclick="showTab('overview', this)">
+        <a href="#overview" class="nav-item" data-tab-id="overview" onclick="showTab('overview', this)">
             <span style="font-size: 1.2em;">🏠</span> Übersicht
         </a>
-        <a href="#welcome" class="nav-item" onclick="showTab('welcome', this)">
+        <a href="#welcome" class="nav-item" data-tab-id="welcome" onclick="showTab('welcome', this)">
             <span style="font-size: 1.2em;">👋</span> Willkommen/Rollen
         </a>
-        <a href="#moderation" class="nav-item" onclick="showTab('moderation', this)">
+        <a href="#moderation" class="nav-item" data-tab-id="moderation" onclick="showTab('moderation', this)">
             <span style="font-size: 1.2em;">🛡️</span> Moderation
         </a>
-        <a href="#logging" class="nav-item" onclick="showTab('logging', this)">
+        <a href="#logging" class="nav-item" data-tab-id="logging" onclick="showTab('logging', this)">
             <span style="font-size: 1.2em;">⚙️</span> Logging
         </a>
         
@@ -214,12 +218,27 @@
         </div>
         {% endif %}
 
-        <div id="overview" class="tab-content active">
+        <div id="overview" class="tab-content">
             <h2>🏠 Bot-Status Übersicht</h2>
-            <div class="card" style="display: flex; justify-content: space-between; gap: 20px;">
-                <div style="flex: 1;"><h3>Datenbank</h3><p style="font-size: 1.5em; color: var(--accent-primary);">{% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}</p></div>
-                <div style="flex: 1;"><h3>Willkommenskanal</h3><p style="font-size: 1.5em; color: var(--accent-secondary);">{% if current_config.welcome_channel %} {{ current_config.welcome_channel }} {% else %} Nicht gesetzt {% endif %}</p></div>
-                <div style="flex: 1;"><h3>Filter Aktiv</h3><p style="font-size: 1.5em; color: {% if current_config.profanity_filter_enabled %} var(--accent-primary) {% else %} var(--text-muted) {% endif %}" >{% if current_config.profanity_filter_enabled %} JA {% else %} NEIN {% endif %}</p></div>
+            <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px;">
+                <div style="flex: 1; min-width: 200px;">
+                    <h3>Datenbank</h3>
+                    <p style="font-size: 1.5em; color: var(--accent-primary);">
+                        {% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}
+                    </p>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h3>Willkommenskanal</h3>
+                    <p style="font-size: 1.5em; color: var(--accent-secondary);">
+                        {% if current_config.get('welcome_channel') %} Gesetzt (ID) {% else %} Nicht gesetzt {% endif %}
+                    </p>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <h3>Filter Aktiv</h3>
+                    <p style="font-size: 1.5em; color: {% if current_config.get('profanity_filter_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
+                        {% if current_config.get('profanity_filter_enabled') %} JA {% else %} NEIN {% endif %}
+                    </p>
+                </div>
             </div>
             <div class="card">
                 <h3>📢 Status-Hinweis</h3>
@@ -234,18 +253,18 @@
                 <h3>Willkommensnachricht</h3>
                 <label for="welcome_channel">Willkommens-Kanal (ID):</label>
                 <input type="text" id="welcome_channel" name="welcome_channel" 
-                       value="{{ current_config.welcome_channel | default('', true) }}" 
+                       value="{{ current_config.get('welcome_channel', '') }}" 
                        placeholder="z.B. 1234567890..." required>
                 
                 <label for="welcome_message">Nachricht:</label>
                 <textarea id="welcome_message" name="welcome_message" rows="5" 
                           placeholder="Willkommen {user}! Viel Spaß auf {server}." 
-                          required>{{ current_config.welcome_message | default('', true) }}</textarea>
+                          required>{{ current_config.get('welcome_message', '') }}</textarea>
                 
                 <h3>Auto-Rollen</h3>
                 <label for="autorole_id">Rolle nach Beitritt zuweisen (ID):</label>
                 <input type="text" id="autorole_id" name="autorole_id" 
-                       value="{{ current_config.autorole_id | default('', true) }}" 
+                       value="{{ current_config.get('autorole_id', '') }}" 
                        placeholder="ID der Rolle, die automatisch zugewiesen wird (z.B. 9876543210)">
 
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
@@ -259,14 +278,14 @@
                 <h3>Automatischer Filter</h3>
                 <label for="mod_channel">Moderations-Log-Kanal (ID):</label>
                 <input type="text" id="mod_channel" name="mod_channel" 
-                       value="{{ current_config.mod_channel | default('', true) }}"
+                       value="{{ current_config.get('mod_channel', '') }}"
                        placeholder="Kanal für Warnungen und Logs (z.B. 1234...)">
                 
                 <div class="toggle-container">
-                    <p style="margin-bottom: 0px; color: var(--accent-secondary); font-weight: bold;">Profanity Filter aktivieren:</p>
+                    <label for="profanity_filter_enabled_input" style="margin-bottom: 0px; color: var(--accent-secondary); font-weight: bold;">Profanity Filter aktivieren:</label>
                     <label class="toggle-switch">
-                        <input type="checkbox" name="profanity_filter_enabled" 
-                               {% if current_config.profanity_filter_enabled %} checked {% endif %}>
+                        <input type="checkbox" id="profanity_filter_enabled_input" name="profanity_filter_enabled" 
+                               {% if current_config.get('profanity_filter_enabled') %} checked {% endif %}>
                         <span class="slider round"></span>
                     </label>
                 </div>
@@ -274,7 +293,7 @@
                 <h3>Strafen</h3>
                 <label for="auto_mute_duration">Auto-Mute Dauer (Minuten):</label>
                 <input type="text" id="auto_mute_duration" name="auto_mute_duration" 
-                       value="{{ current_config.auto_mute_duration | default('60', true) }}"
+                       value="{{ current_config.get('auto_mute_duration', '60') }}"
                        placeholder="Dauer in Minuten für automatische Mutes (z.B. 60 für 1 Stunde)">
 
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
@@ -288,17 +307,18 @@
                 <h3>Kanal</h3>
                 <label for="logging_channel">Logging-Kanal (ID):</label>
                 <input type="text" id="logging_channel" name="logging_channel" 
-                       value="{{ current_config.logging_channel | default('', true) }}"
+                       value="{{ current_config.get('logging_channel', '') }}"
                        placeholder="z.B. 1234567890..." required>
                 
                 <h3>Events (STRG gedrückt halten zum Mehrfachauswahl)</h3>
                 <label for="log_events">Zu loggende Events:</label>
                 <select id="log_events" name="log_events" multiple style="height: 150px;">
-                    <option value="member_join" {% if 'member_join' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder betreten</option>
-                    <option value="member_leave" {% if 'member_leave' in current_config.log_events | default([]) %} selected {% endif %}>Mitglieder verlassen</option>
-                    <option value="message_delete" {% if 'message_delete' in current_config.log_events | default([]) %} selected {% endif %}>Nachricht gelöscht</option>
-                    <option value="message_edit" {% if 'message_edit' in current_config.log_events | default([]) %} selected {% endif %}>Nachricht bearbeitet</option>
-                    <option value="role_update" {% if 'role_update' in current_config.log_events | default([]) %} selected {% endif %}>Rollen-Update</option>
+                    {% set logged_events = current_config.get('log_events', []) %}
+                    <option value="member_join" {% if 'member_join' in logged_events %} selected {% endif %}>Mitglieder betreten</option>
+                    <option value="member_leave" {% if 'member_leave' in logged_events %} selected {% endif %}>Mitglieder verlassen</option>
+                    <option value="message_delete" {% if 'message_delete' in logged_events %} selected {% endif %}>Nachricht gelöscht</option>
+                    <option value="message_edit" {% if 'message_edit' in logged_events %} selected {% endif %}>Nachricht bearbeitet</option>
+                    <option value="role_update" {% if 'role_update' in logged_events %} selected {% endif %}>Rollen-Update</option>
                 </select>
 
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
@@ -328,13 +348,17 @@
              const urlParams = new URLSearchParams(window.location.search);
              const activeTabId = urlParams.get('tab') || 'overview';
              
-             const activeNavItem = document.querySelector(`.nav-item[href="#${activeTabId}"]`);
-             if (activeNavItem) {
-                 document.querySelector('.nav-item.active')?.classList.remove('active');
-                 showTab(activeTabId, activeNavItem);
-             } else {
-                 document.querySelector('.nav-item[href="#overview"]').click();
+             // Finde das korrespondierende Navigationselement
+             const activeNavItem = document.querySelector(`.nav-item[data-tab-id="${activeTabId}"]`);
+             
+             // Standardfall: Wähle Übersicht
+             if (!activeNavItem) {
+                 document.querySelector(`.nav-item[data-tab-id="overview"]`).click();
+                 return;
              }
+             
+             // Zeige den korrekten Tab an (simuliere Klick auf das Navigationselement)
+             showTab(activeTabId, activeNavItem);
         });
     </script>
 </body>

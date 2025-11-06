@@ -9,7 +9,6 @@
         :root {
             --bg-dark: #121212;
             --accent-primary: #FFB74D;
-            --accent-secondary: #00bcd4;
             --error: #FF6B6B;
             --text-light: #E0E0E0; 
         }
@@ -30,6 +29,7 @@
             box-shadow: 0 0 20px rgba(255, 107, 107, 0.6); 
             text-align: center; 
             border: 3px solid var(--error); 
+            max-width: 400px;
         }
         .error-box h1 { 
             color: var(--error); 
@@ -58,7 +58,7 @@
 </head>
 <body>
     <div class="error-box">
-        <h1>Discord API Fehler (401)</h1>
+        <h1>Discord API Fehler</h1>
         <p>{{ error_message }}</p>
         <a href="/" class="home-button">Zur Startseite</a>
     </div>

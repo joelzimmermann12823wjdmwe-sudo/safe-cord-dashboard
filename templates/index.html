@@ -7,13 +7,11 @@
     <style>
         /* GALAXY / MODERN DARK PALETTE */
         :root {
-            --bg-dark: #121212; /* Tiefer, dunkler Hintergrund */
-            --bg-card: #1F1F1F; /* Card Hintergrund */
-            --accent-primary: #FFB74D; /* Warmes Gold/Orange (Primärer Akzent) */
-            --accent-secondary: #00bcd4; /* Cyan/Teal (Sekundärer Kontrast) */
-            --text-light: #E0E0E0; /* Helle, lesbare Schrift */
-            --text-muted: #A0A0A0; /* Dezenter Text für Unterbereiche */
-            --success: #4CAF50;
+            --bg-dark: #121212; 
+            --bg-card: #1F1F1F; 
+            --accent-primary: #FFB74D; 
+            --accent-secondary: #00bcd4; 
+            --text-light: #E0E0E0; 
         }
 
         body { 
@@ -32,7 +30,8 @@
             border-radius: 12px; 
             box-shadow: 0 0 20px rgba(0, 188, 212, 0.4); 
             text-align: center; 
-            border: 2px solid var(--accent-secondary); /* Akzent-Border */
+            border: 2px solid var(--accent-secondary); 
+            max-width: 400px;
         }
         .login-box h1 { 
             color: var(--accent-primary); 
@@ -59,6 +58,17 @@
         .login-button:hover { 
             background-color: #FF9800; 
             box-shadow: 0 0 15px var(--accent-primary);
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 600px) {
+            .login-box {
+                margin: 20px;
+                padding: 30px;
+            }
+            .login-button {
+                padding: 12px 30px;
+            }
         }
     </style>
 </head>
