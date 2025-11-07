@@ -1,230 +1,211 @@
 import os
+import sys
 import json
-from flask import Flask, render_template, request, redirect, url_for, session
-from google.cloud import firestore
-from firebase_admin import auth, credentials, initialize_app
-import requests
-from dotenv import load_dotenv
-import tempfile
+from datetime import timedelta
 
-# Lade Umgebungsvariablen
+# Externe Bibliotheken (müssen in requirements.txt sein)
+from flask import Flask, redirect, url_for, session, render_template, request, jsonify
+from requests_oauthlib import OAuth2Session
+from dotenv import load_dotenv
+
+# Firebase/Firestore
+import firebase_admin
+from firebase_admin import credentials, firestore, auth
+
+# Umgebungsvariablen laden
+# Auf Render werden diese direkt geladen, aber lokal benötigen wir diese Zeile.
 load_dotenv()
 
-# --- Globale Konstanten und Initialisierung ---
-DISCORD_CLIENT_ID = os.environ.get("DISCORD_CLIENT_ID")
-DISCORD_CLIENT_SECRET = os.environ.get("DISCORD_CLIENT_SECRET")
-# HIER MUSS DIE ÖFFENTLICHE URL IHRES RENDER-SERVICES EINGETRAGEN WERDEN
-DISCORD_REDIRECT_URI = os.environ.get("DISCORD_REDIRECT_URI", "https://localhost:8080/callback") 
-FIRESTORE_SETTINGS_PATH = "safe_cord_dashboard_settings" 
-SESSION_SECRET_KEY = os.environ.get("SESSION_SECRET_KEY", "super_geheime_schluessel_fuer_session")
+# --- 1. SETUP UND INITIALISIERUNG ---
 
-app = Flask(__name__)
-app.secret_key = SESSION_SECRET_KEY
-
-# Firebase Admin SDK & Firestore Initialisierung
+# Firestore- und Firebase-Initialisierung
 try:
-    service_account_json = os.environ.get("GCP_SERVICE_ACCOUNT_KEY")
-    if service_account_json:
-        # Verwende tempfile für Render-Deployment-Sicherheit
-        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False)
-        temp_file.write(service_account_json) 
-        temp_file.close()
-
-        cred = credentials.Certificate(temp_file.name)
-        initialize_app(cred)
-        os.unlink(temp_file.name)
-    
+    # 1. Firebase Admin SDK initialisieren
+    # Der Service Account Key wird von Render über die Variable GCP_SERVICE_ACCOUNT_KEY bereitgestellt.
+    service_account_info = json.loads(os.getenv("GCP_SERVICE_ACCOUNT_KEY"))
+    cred = credentials.Certificate(service_account_info)
+    firebase_admin.initialize_app(cred)
     db = firestore.client()
+    print("INFO: Firestore-Client erfolgreich initialisiert.")
 except Exception as e:
-    print(f"ERROR: Firebase Admin SDK Initialisierung fehlgeschlagen: {e}")
-    db = None
+    # Wenn die Initialisierung fehlschlägt, ist dies ein schwerwiegender Fehler.
+    print(f"ERROR: Firestore-Initialisierung fehlgeschlagen: {e}", file=sys.stderr)
+    db = None # Setze db auf None, um Fehler in Funktionen abzufangen
 
-# --- Hilfsfunktionen für Firestore ---
-def get_oauth_url():
-    """Generiert die Discord OAuth2 URL für den Login."""
-    return (
-        f"https://discord.com/api/oauth2/authorize?client_id={DISCORD_CLIENT_ID}"
-        f"&redirect_uri={DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20guilds"
+# Flask App Initialisierung
+app = Flask(__name__)
+# WICHTIG: SECRET_KEY MUSS in Render als Umgebungsvariable gesetzt sein!
+app.secret_key = os.getenv("SECRET_KEY")
+app.config['SESSION_COOKIE_NAME'] = 'discord_oauth_session'
+# Session-Lebensdauer für 7 Tage (Optional)
+app.permanent_session_lifetime = timedelta(days=7)
+
+# Discord OAuth Konfiguration
+# Die CLIENT_ID und CLIENT_SECRET MÜSSEN in Render gesetzt sein!
+CLIENT_ID = os.getenv("DISCORD_CLIENT_ID")
+CLIENT_SECRET = os.getenv("DISCORD_CLIENT_SECRET")
+REDIRECT_URI = os.getenv("DISCORD_REDIRECT_URI")
+
+if not all([CLIENT_ID, CLIENT_SECRET, REDIRECT_URI, app.secret_key]):
+    print("FATAL ERROR: Eine oder mehrere Discord- oder SECRET_KEY-Umgebungsvariablen fehlen!", file=sys.stderr)
+
+# OAuth Endpunkte
+AUTHORIZATION_BASE_URL = 'https://discord.com/api/oauth2/authorize'
+TOKEN_URL = 'https://discord.com/api/oauth2/token'
+USER_API_URL = 'https://discord.com/api/users/@me'
+
+# Discord Scopes, die wir benötigen (z.B. um den User-Namen und die ID zu sehen)
+# Wenn Sie Guilds/Server sehen möchten, fügen Sie 'guilds' hinzu.
+SCOPE = ['identify']
+
+# --- 2. HILFSFUNKTIONEN ---
+
+def get_discord_session():
+    """Erstellt und gibt eine OAuth2Session zurück."""
+    return OAuth2Session(
+        CLIENT_ID,
+        redirect_uri=REDIRECT_URI,
+        scope=SCOPE
     )
 
-def fetch_user_data(token):
-    """Ruft Benutzer- und Gilden-Informationen von Discord ab."""
-    headers = {"Authorization": f"Bearer {token}"}
-    user_data = requests.get("https://discord.com/api/v10/users/@me", headers=headers).json()
-    guilds_data = requests.get("https://discord.com/api/v10/users/@me/guilds", headers=headers).json()
-    return user_data, guilds_data
-
-def get_firebase_custom_token(discord_user_id):
-    """Erstellt einen Firebase Custom Token für die Anmeldung des Dashboards."""
-    return auth.create_custom_token(str(discord_user_id))
-
-def get_guild_settings(guild_id):
-    """Lädt die Einstellungen für eine Gilde aus Firestore und füllt fehlende Modulwerte auf."""
-    if not db: return {}
+def fetch_discord_user(session):
+    """Ruft die Benutzerinformationen von Discord ab."""
     try:
-        doc_ref = db.collection(FIRESTORE_SETTINGS_PATH).document(str(guild_id))
-        doc = doc_ref.get()
-        settings = doc.to_dict() if doc.exists else {}
-
-        default_modules = {
-            'roles_protection': {'active': False},
-            'anti_nuke': {'active': True, 'limit': 5, 'time_window': 10},
-            'lockdown': {'active': True},
-        }
-        
-        settings['modules'] = settings.get('modules', {})
-        for key, default in default_modules.items():
-            settings['modules'][key] = settings['modules'].get(key, default)
-            
-        settings['roles'] = settings.get('roles', {})
-            
-        return settings
+        r = session.get(USER_API_URL)
+        r.raise_for_status() # Löst HTTPError für schlechte Antworten aus
+        return r.json()
     except Exception as e:
-        print(f"ERROR: Firestore-Laden fehlgeschlagen: {e}")
-        return {}
+        print(f"ERROR: Fehler beim Abrufen des Discord-Benutzers: {e}", file=sys.stderr)
+        return None
 
-def save_guild_settings(guild_id, data):
-    """Speichert die Einstellungen für eine Gilde in Firestore."""
-    if not db: return False
-    try:
-        doc_ref = db.collection(FIRESTORE_SETTINGS_PATH).document(str(guild_id))
-        doc_ref.set(data)
-        return True
-    except Exception as e:
-        print(f"ERROR: Firestore-Speichern fehlgeschlagen: {e}")
-        return False
-
-
-# --- FLASK-ROUTEN ---
+# --- 3. FLASK ROUTEN ---
 
 @app.route("/")
 def index():
-    """Startseite: Zeigt Login-Link oder Dashboard-Auswahl im neuen Design."""
-    if 'discord_user_id' not in session:
-        return render_template("index.html", oauth_url=get_oauth_url())
+    """Startseite des Dashboards."""
     
-    admin_guilds = [
-        g for g in session.get('guilds', []) 
-        if (int(g['permissions']) & 0x8) or (int(g['permissions']) & 0x20) # ADMINISTRATOR oder MANAGE_GUILD
-    ]
-    
-    firebase_token = session.get('firebase_token')
-    
-    # Rendere das neue Design-Template
-    return render_template(
-        "safe_cord_select.html",  
-        user=session.get('user'), 
-        guilds=admin_guilds,
-        firebase_token=firebase_token
-    )
+    # 1. Prüfen, ob der Benutzer bereits eingeloggt ist
+    if 'discord_token' not in session:
+        return render_template("index.html", logged_in=False)
 
-# ... (callback und logout Routen bleiben gleich) ...
+    # 2. Wenn eingeloggt, versuchen, Benutzerdaten abzurufen
+    try:
+        # Session mit gespeichertem Token wiederherstellen
+        discord = get_discord_session()
+        token = session.get('discord_token')
+        discord.token = token
+        
+        # Benutzerdaten abrufen
+        user = fetch_discord_user(discord)
+        
+        if user:
+            # Wenn der Benutzer gefunden wird, zeigen Sie das Dashboard an
+            return render_template("dashboard.html", logged_in=True, user=user)
+        else:
+            # Falls das Token abgelaufen ist oder ungültig, ausloggen
+            session.pop('discord_token', None)
+            return redirect(url_for('index'))
+            
+    except Exception as e:
+        print(f"ERROR: Fehler beim Laden der Session oder des Benutzers: {e}", file=sys.stderr)
+        session.pop('discord_token', None)
+        return redirect(url_for('index'))
+
+@app.route("/login")
+def login():
+    """Leitet den Benutzer zur Discord-Autorisierungsseite weiter."""
+    
+    # 1. OAuth-Sitzung erstellen
+    discord = get_discord_session()
+    
+    # 2. Autorisierungs-URL generieren
+    authorization_url, state = discord.authorization_url(AUTHORIZATION_BASE_URL)
+    
+    # 3. Den 'state' für die spätere Überprüfung in der Session speichern
+    session['oauth_state'] = state
+    session.permanent = True # Macht die Session permanent
+    
+    # 4. Weiterleiten
+    return redirect(authorization_url)
 
 @app.route("/callback")
 def callback():
-    """Verarbeitet den Discord OAuth2 Callback."""
-    code = request.args.get("code")
-    if not code: return redirect(url_for("index"))
-
-    token_url = "https://discord.com/api/oauth2/token"
-    data = {
-        "client_id": DISCORD_CLIENT_ID,
-        "client_secret": DISCORD_CLIENT_SECRET,
-        "grant_type": "authorization_code",
-        "code": code,
-        "redirect_uri": DISCORD_REDIRECT_URI,
-        "scope": "identify guilds"
-    }
-    headers = {"Content-Type": "application/x-www-form-urlencoded"}
+    """Wird nach erfolgreicher Discord-Anmeldung aufgerufen (Redirect URI)."""
     
+    # 1. Zustand (state) prüfen
+    # Die 'state'-Variable, die von Discord zurückgegeben wird, muss mit der
+    # in der Session gespeicherten übereinstimmen, um CSRF-Angriffe zu verhindern.
+    if request.values.get('state') != session.get('oauth_state'):
+        # Wenn der State nicht übereinstimmt, ist es ein ungültiger/bösartiger Request
+        return "Ungültiger State-Parameter", 403
+    
+    # 2. Token abrufen
     try:
-        response = requests.post(token_url, data=data, headers=headers).json()
-        token = response.get("access_token")
+        # Korrektur des Fehlers: get_discord_session() darf KEINEN 'state' als Argument bekommen
+        discord = get_discord_session()
         
-        if not token: return redirect(url_for("index"))
-
-        user_data, guilds_data = fetch_user_data(token)
-        
-        session['discord_user_id'] = user_data['id']
-        session['user'] = user_data
-        session['guilds'] = guilds_data
-        session['firebase_token'] = get_firebase_custom_token(user_data['id'])
-
-        return redirect(url_for("index"))
+        token = discord.fetch_token(
+            TOKEN_URL,
+            client_secret=CLIENT_SECRET,
+            authorization_response=request.url
+        )
         
     except Exception as e:
-        print(f"ERROR: Beim Callback ist ein Fehler aufgetreten: {e}")
-        return redirect(url_for("index"))
-
-
-@app.route("/dashboard/<guild_id>", methods=["GET", "POST"])
-def dashboard(guild_id):
-    """Anzeige und Speicherung der Gilden-Einstellungen."""
-    if 'discord_user_id' not in session:
-        return redirect(url_for("index"))
-
-    guild = next((g for g in session['guilds'] if g['id'] == guild_id), None)
-    if not guild or not ((int(guild['permissions']) & 0x8) or (int(guild['permissions']) & 0x20)):
-        return "Zugriff verweigert oder Gilde nicht gefunden", 403
-
-    # Simulierte Bot-Rollen
-    bot_simulated_roles = [
-        {'id': '123456789012345678', 'name': '@Admins'},
-        {'id': '987654321098765432', 'name': '@Mods'},
-        {'id': '111222333444555666', 'name': '@Member'},
-        {'id': guild_id, 'name': '@Everyone'}
-    ]
-
-    # POST: Einstellungen speichern
-    if request.method == "POST":
-        data = get_guild_settings(guild_id)
-
-        # 1. Modul-Aktivierung und Limits speichern
-        data['modules']['roles_protection']['active'] = 'roles_protection_active' in request.form
-        data['modules']['lockdown']['active'] = 'lockdown_active' in request.form
+        print(f"ERROR: Fehler beim Abrufen des Tokens: {e}", file=sys.stderr)
+        return "Fehler beim Abrufen des Discord-Tokens", 500
         
-        # Anti-Nuke Limits
-        data['modules']['anti_nuke']['active'] = 'anti_nuke_active' in request.form
+    # 3. Token in der Session speichern
+    session['discord_token'] = token
+    
+    # 4. Benutzerdaten abrufen und Firebase Auth Token erstellen
+    user_data = fetch_discord_user(discord)
+    
+    if user_data:
+        discord_id = str(user_data['id'])
+        username = user_data['username']
+        
+        # Erstelle oder aktualisiere den Firebase-Benutzer
         try:
-            data['modules']['anti_nuke']['limit'] = int(request.form.get('anti_nuke_limit', 5))
-            data['modules']['anti_nuke']['time_window'] = int(request.form.get('anti_nuke_time_window', 10))
-        except ValueError:
-            data['modules']['anti_nuke']['limit'] = 5
-            data['modules']['anti_nuke']['time_window'] = 10
-
-        # 2. Rollen-Schutz speichern
-        data['roles'] = {role['id']: False for role in bot_simulated_roles}
-        for role_id in request.form.getlist('protected_roles'):
-            if role_id in data['roles']:
-                 data['roles'][role_id] = True
-
-        if save_guild_settings(guild_id, data):
-            return redirect(url_for("dashboard", guild_id=guild_id))
-
-    # GET: Dashboard anzeigen
-    settings = get_guild_settings(guild_id)
-
-    roles_with_status = []
-    for role in bot_simulated_roles:
-        role['is_protected'] = settings['roles'].get(role['id'], False)
-        roles_with_status.append(role)
-
-
-    return render_template(
-        "dashboard.html",
-        guild=guild,
-        settings=settings,
-        roles=roles_with_status,
-        bot_id=DISCORD_CLIENT_ID 
-    )
-
+            # 1. Firebase-Benutzer erstellen/aktualisieren (ID ist die Discord ID)
+            # Wir verwenden die Discord ID als UID in Firebase Auth
+            firebase_user = auth.get_user(discord_id)
+            auth.update_user(discord_id, display_name=username)
+        except auth.AuthError:
+            # Benutzer existiert nicht, neu erstellen
+            firebase_user = auth.create_user(
+                uid=discord_id,
+                email=f"{discord_id}@discord.safe-cord.com", # Verwenden Sie eine Dummy-E-Mail
+                display_name=username
+            )
+        
+        # 2. Firebase Custom Token erstellen
+        custom_token = auth.create_custom_token(discord_id)
+        
+        # 3. Speichern Sie das Custom Token oder die UID, um es auf der Dashboard-Seite zu verwenden
+        # Für die weitere Verwendung speichern wir nur die UID
+        session['user_id'] = discord_id
+        session['firebase_token'] = custom_token.decode('utf-8')
+        
+    # 5. Weiterleitung zur Startseite (jetzt ist der Benutzer eingeloggt)
+    return redirect(url_for('index'))
 
 @app.route("/logout")
 def logout():
-    """Meldet den Benutzer ab."""
-    session.clear()
-    return redirect(url_for("index"))
+    """Loggt den Benutzer aus, indem die Session-Daten gelöscht werden."""
+    session.pop('discord_token', None)
+    session.pop('oauth_state', None)
+    session.pop('user_id', None)
+    session.pop('firebase_token', None)
+    return redirect(url_for('index'))
 
-# --- START ---
-if __name__ == "__main__":
-    app.run(host="localhost", port=8080, debug=True)
+# --- 4. FLASK START ---
+
+# Die Flask-App muss nicht gestartet werden, wenn sie unter Gunicorn läuft.
+# Diese Zeilen sind nur für den lokalen Test nützlich.
+if __name__ == '__main__':
+    # Beispiel für eine fehlende SECRET_KEY-Meldung beim lokalen Test
+    if not app.secret_key:
+        print("WARNUNG: SECRET_KEY fehlt! Session-Sicherheit ist kompromittiert.")
+        
+    # Lokaler Test auf Port 8080
+    app.run(debug=True, port=8080)
