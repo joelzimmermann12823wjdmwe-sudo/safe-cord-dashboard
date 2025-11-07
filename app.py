@@ -73,23 +73,26 @@ def get_user_config(user_id):
         doc_ref = db.collection(FIRESTORE_COLLECTION_PATH).document(user_id).collection('config').document('server_settings')
         doc = doc_ref.get()
         
-        if doc.exists:
-            config = doc.to_dict()
-            
-            # Konvertiere JSON-Strings (für log_events) zurück in Python-Listen
-            if 'log_events' in config and isinstance(config['log_events'], str):
-                try:
-                    config['log_events'] = json.loads(config['log_events'])
-                except json.JSONDecodeError:
-                    config['log_events'] = []
-            
-            # Sicherstellen, dass boolesche Werte vorhanden sind
-            if 'profanity_filter_enabled' not in config:
-                 config['profanity_filter_enabled'] = False
+        config = doc.to_dict() if doc.exists else {}
 
-            return config
+        # Default-Werte hinzufügen und JSON-Strings in Listen konvertieren
+        if 'log_events' in config and isinstance(config['log_events'], str):
+            try:
+                config['log_events'] = json.loads(config['log_events'])
+            except json.JSONDecodeError:
+                config['log_events'] = []
         else:
-            return {}
+            config['log_events'] = []
+
+        # Neue Sicherheits-Standardwerte hinzufügen, falls nicht vorhanden
+        config['profanity_filter_enabled'] = config.get('profanity_filter_enabled', False)
+        config['antispam_enabled'] = config.get('antispam_enabled', False)
+        config['invitation_filter_enabled'] = config.get('invitation_filter_enabled', False)
+        config['antilink_enabled'] = config.get('antilink_enabled', False)
+        config['anti_nuke_enabled'] = config.get('anti_nuke_enabled', False)
+        config['antivirus_enabled'] = config.get('antivirus_enabled', False)
+        
+        return config
     except Exception as e:
         print(f"Fehler beim Laden der Konfiguration für {user_id}: {e}")
         return {}
@@ -103,22 +106,30 @@ def save_user_config(user_id, form_data):
         doc_ref = db.collection(FIRESTORE_COLLECTION_PATH).document(user_id).collection('config').document('server_settings')
         
         update_data = {}
+        config_type = form_data.get('config_type')
+
         for key, value in form_data.items():
-            if key == 'profanity_filter_enabled':
-                # Wird unten explizit als boolescher Wert gesetzt
+            if key in ['profanity_filter_enabled', 'antispam_enabled', 'invitation_filter_enabled', 'antilink_enabled', 'anti_nuke_enabled', 'antivirus_enabled']:
+                # Boolean-Werte werden unten explizit gesetzt, um deaktivierte Checkboxen zu erfassen
                 pass 
             elif key == 'log_events':
-                # Value ist bereits eine Liste aus dem clean_data-Prozess (Multi-Select)
                 # Speichere als JSON-String in Firestore
                 update_data[key] = json.dumps(value)
             elif key != 'config_type': # config_type ist nur für die interne Verarbeitung
                 update_data[key] = value
 
-        # Spezieller Check für Checkboxen (Profanity Filter)
-        # Wenn der Schlüssel 'profanity_filter_enabled' in den gesendeten Formulardaten enthalten ist,
-        # wurde die Checkbox aktiviert (True), andernfalls deaktiviert (False).
-        if form_data.get('config_type') == 'moderation':
+        # Spezieller Check für Checkboxen
+        if config_type == 'moderation':
             update_data['profanity_filter_enabled'] = 'profanity_filter_enabled' in form_data
+        
+        elif config_type == 'security':
+            update_data['antispam_enabled'] = 'antispam_enabled' in form_data
+            update_data['invitation_filter_enabled'] = 'invitation_filter_enabled' in form_data
+            update_data['antilink_enabled'] = 'antilink_enabled' in form_data
+        
+        elif config_type == 'anti-nuke':
+            update_data['anti_nuke_enabled'] = 'anti_nuke_enabled' in form_data
+            update_data['antivirus_enabled'] = 'antivirus_enabled' in form_data
 
         # Die Konfiguration in Firestore setzen/aktualisieren
         doc_ref.set(update_data, merge=True)
@@ -128,7 +139,7 @@ def save_user_config(user_id, form_data):
         print(f"Fehler beim Speichern der Konfiguration für {user_id}: {e}")
         return False
 
-# FLASK ROUTEN
+# FLASK ROUTEN (Routen bleiben gleich)
 # ==============================================================================
 
 @app.route("/")
@@ -238,6 +249,10 @@ def save_config():
         target_tab = 'welcome'
     elif config_type == 'moderation':
         target_tab = 'moderation'
+    elif config_type == 'security':
+        target_tab = 'security'
+    elif config_type == 'anti-nuke':
+        target_tab = 'antinuke' # Tab-ID ist 'antinuke'
     elif config_type == 'logging':
         target_tab = 'logging'
         

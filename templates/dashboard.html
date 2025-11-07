@@ -7,14 +7,15 @@
     <style>
         /* GALAXY / MODERN DARK PALETTE */
         :root {
-            --bg-dark: #121212; /* Tiefer, dunkler Hintergrund */
-            --bg-card: #1F1F1F; /* Card Hintergrund */
-            --accent-primary: #FFB74D; /* Warmes Gold/Orange (Primärer Akzent) */
-            --accent-secondary: #00bcd4; /* Cyan/Teal (Sekundärer Kontrast) */
-            --text-light: #E0E0E0; /* Helle, lesbare Schrift */
-            --text-muted: #A0A0A0; /* Dezenter Text für Unterbereiche */
+            --bg-dark: #121212; 
+            --bg-card: #1F1F1F; 
+            --accent-primary: #FFB74D; 
+            --accent-secondary: #00bcd4; 
+            --text-light: #E0E0E0; 
+            --text-muted: #A0A0A0; 
             --error: #FF6B6B;
             --success: #4CAF50;
+            --warning: #FFC107; 
         }
 
         /* [DESIGN CSS] */
@@ -36,6 +37,7 @@
             height: 100%; 
             overflow-y: auto; 
             border-right: 2px solid var(--accent-primary); 
+            z-index: 10; 
         }
         .sidebar h2 { 
             color: var(--accent-primary); 
@@ -115,14 +117,22 @@
         }
 
         /* TOGGLE SWITCH */
-        .toggle-container { display: flex; align-items: center; margin-bottom: 20px; gap: 15px;}
+        .toggle-container { 
+            display: flex; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            gap: 15px;
+            padding: 10px;
+            border: 1px dashed var(--text-muted);
+            border-radius: 6px;
+        }
         .toggle-switch {
-            position: relative; display: inline-block; width: 60px; height: 34px; margin-left: 10px;
+            position: relative; display: inline-block; width: 60px; height: 34px; margin-left: auto;
         }
         .toggle-switch input { opacity: 0; width: 0; height: 0; }
         .slider {
             position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--error); /* Standardmäßig rot (deaktiviert) */
+            background-color: var(--error); 
             transition: .4s; border-radius: 34px;
         }
         .slider:before {
@@ -130,7 +140,7 @@
             background-color: var(--text-light); transition: .4s; border-radius: 50%;
         }
         input:checked + .slider { 
-            background-color: var(--success); /* Grün bei Aktivierung */
+            background-color: var(--success); 
         }
         input:checked + .slider:before { transform: translateX(26px); }
         
@@ -140,8 +150,14 @@
         
         /* FOOTER */
         .user-footer { 
-            position: fixed; bottom: 0; left: 0; width: 250px; padding: 15px 20px; 
-            background-color: var(--bg-dark); border-top: 1px solid var(--accent-secondary); 
+            position: absolute; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%;
+            padding: 15px 20px; 
+            box-sizing: border-box;
+            background-color: var(--bg-dark); 
+            border-top: 1px solid var(--accent-secondary); 
         }
         .user-footer p { margin: 5px 0; font-size: 0.9em; }
         .user-footer a { color: var(--accent-primary); text-decoration: none; transition: color 0.2s; }
@@ -149,23 +165,43 @@
 
         /* FÜR MOBILE */
         @media (max-width: 768px) {
+            body { flex-direction: column; }
             .sidebar { 
                 width: 100%; 
                 height: auto; 
                 position: relative; 
                 border-right: none; 
                 border-bottom: 2px solid var(--accent-primary);
+                min-height: auto; 
+                padding-bottom: 15px;
+            }
+            .sidebar h2 { display: none; } 
+            .sidebar > .card:first-child { margin-top: 0; }
+            
+            .nav-container {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                justify-content: center;
+                margin-bottom: 10px;
+            }
+            .nav-item { 
+                flex-grow: 1; 
+                justify-content: center;
+                text-align: center;
+                padding: 10px 15px;
             }
             .main-content { 
                 margin-left: 0; 
                 padding: 20px; 
             }
-            .nav-item { 
-                justify-content: center;
-            }
             .user-footer {
                 position: relative;
-                width: auto;
+                width: 100%;
+                bottom: auto;
+                left: auto;
+                text-align: center;
+                padding: 15px 0;
             }
             .card {
                 flex-direction: column;
@@ -190,18 +226,26 @@
             </select>
         </div>
 
-        <a href="#overview" class="nav-item" data-tab-id="overview" onclick="showTab('overview', this)">
-            <span style="font-size: 1.2em;">🏠</span> Übersicht
-        </a>
-        <a href="#welcome" class="nav-item" data-tab-id="welcome" onclick="showTab('welcome', this)">
-            <span style="font-size: 1.2em;">👋</span> Willkommen/Rollen
-        </a>
-        <a href="#moderation" class="nav-item" data-tab-id="moderation" onclick="showTab('moderation', this)">
-            <span style="font-size: 1.2em;">🛡️</span> Moderation
-        </a>
-        <a href="#logging" class="nav-item" data-tab-id="logging" onclick="showTab('logging', this)">
-            <span style="font-size: 1.2em;">⚙️</span> Logging
-        </a>
+        <div class="nav-container">
+            <a href="#overview" class="nav-item" data-tab-id="overview" onclick="showTab('overview', this)">
+                <span style="font-size: 1.2em;">🏠</span> Übersicht
+            </a>
+            <a href="#welcome" class="nav-item" data-tab-id="welcome" onclick="showTab('welcome', this)">
+                <span style="font-size: 1.2em;">👋</span> Willkommen/Rollen
+            </a>
+            <a href="#moderation" class="nav-item" data-tab-id="moderation" onclick="showTab('moderation', this)">
+                <span style="font-size: 1.2em;">🛡️</span> Moderation
+            </a>
+            <a href="#security" class="nav-item" data-tab-id="security" onclick="showTab('security', this)">
+                <span style="font-size: 1.2em;">🔒</span> Sicherheit
+            </a>
+            <a href="#antinuke" class="nav-item" data-tab-id="antinuke" onclick="showTab('antinuke', this)">
+                <span style="font-size: 1.2em;">☢️</span> Anti-Nuke
+            </a>
+            <a href="#logging" class="nav-item" data-tab-id="logging" onclick="showTab('logging', this)">
+                <span style="font-size: 1.2em;">⚙️</span> Logging
+            </a>
+        </div>
         
         <div class="user-footer">
             <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
@@ -222,21 +266,21 @@
             <h2>🏠 Bot-Status Übersicht</h2>
             <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px;">
                 <div style="flex: 1; min-width: 200px;">
-                    <h3>Datenbank</h3>
-                    <p style="font-size: 1.5em; color: var(--accent-primary);">
-                        {% if current_config %} Verbunden / Daten geladen {% else %} Verbunden / Neu {% endif %}
+                    <h3>Sicherheitslevel</h3>
+                    <p style="font-size: 1.5em; color: var(--warning);">
+                        {% if current_config.get('anti_nuke_enabled') %} HOCH {% else %} MITTEL {% endif %}
                     </p>
                 </div>
                 <div style="flex: 1; min-width: 200px;">
-                    <h3>Willkommenskanal</h3>
-                    <p style="font-size: 1.5em; color: var(--accent-secondary);">
-                        {% if current_config.get('welcome_channel') %} Gesetzt (ID) {% else %} Nicht gesetzt {% endif %}
+                    <h3>Anti-Spam</h3>
+                    <p style="font-size: 1.5em; color: {% if current_config.get('antispam_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
+                        {% if current_config.get('antispam_enabled') %} AN {% else %} AUS {% endif %}
                     </p>
                 </div>
                 <div style="flex: 1; min-width: 200px;">
-                    <h3>Filter Aktiv</h3>
-                    <p style="font-size: 1.5em; color: {% if current_config.get('profanity_filter_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
-                        {% if current_config.get('profanity_filter_enabled') %} JA {% else %} NEIN {% endif %}
+                    <h3>Anti-Nuke</h3>
+                    <p style="font-size: 1.5em; color: {% if current_config.get('anti_nuke_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
+                        {% if current_config.get('anti_nuke_enabled') %} AN {% else %} AUS {% endif %}
                     </p>
                 </div>
             </div>
@@ -250,6 +294,7 @@
             <h2>👋 Willkommen & Auto-Rollen</h2>
             <form action="/save_config" method="POST" class="card">
                 <input type="hidden" name="config_type" value="welcome">
+                
                 <h3>Willkommensnachricht</h3>
                 <label for="welcome_channel">Willkommens-Kanal (ID):</label>
                 <input type="text" id="welcome_channel" name="welcome_channel" 
@@ -275,6 +320,7 @@
             <h2>🛡️ Moderations-System</h2>
              <form action="/save_config" method="POST" class="card">
                 <input type="hidden" name="config_type" value="moderation">
+                
                 <h3>Automatischer Filter</h3>
                 <label for="mod_channel">Moderations-Log-Kanal (ID):</label>
                 <input type="text" id="mod_channel" name="mod_channel" 
@@ -282,7 +328,7 @@
                        placeholder="Kanal für Warnungen und Logs (z.B. 1234...)">
                 
                 <div class="toggle-container">
-                    <label for="profanity_filter_enabled_input" style="margin-bottom: 0px; color: var(--accent-secondary); font-weight: bold;">Profanity Filter aktivieren:</label>
+                    <label for="profanity_filter_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Profanity Filter (Schimpfwörter) aktivieren:</label>
                     <label class="toggle-switch">
                         <input type="checkbox" id="profanity_filter_enabled_input" name="profanity_filter_enabled" 
                                {% if current_config.get('profanity_filter_enabled') %} checked {% endif %}>
@@ -299,11 +345,84 @@
                 <button type="submit" class="submit-button">Einstellungen speichern</button>
             </form>
         </div>
-        
+
+        <div id="security" class="tab-content">
+            <h2>�� Erweiterte Sicherheits-Filter</h2>
+             <form action="/save_config" method="POST" class="card">
+                <input type="hidden" name="config_type" value="security">
+                
+                <h3>Nachrichten-Filter</h3>
+                
+                <div class="toggle-container">
+                    <label for="antispam_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Spam (schnelle, doppelte Nachrichten):</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antispam_enabled_input" name="antispam_enabled" 
+                               {% if current_config.get('antispam_enabled') %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <div class="toggle-container">
+                    <label for="invitation_filter_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Discord Einladungs-Filter:</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="invitation_filter_enabled_input" name="invitation_filter_enabled" 
+                               {% if current_config.get('invitation_filter_enabled') %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+                
+                <div class="toggle-container">
+                    <label for="antilink_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Link (alle externen Links blocken):</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antilink_enabled_input" name="antilink_enabled" 
+                               {% if current_config.get('antilink_enabled') %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-button">Einstellungen speichern</button>
+            </form>
+        </div>
+
+        <div id="antinuke" class="tab-content">
+            <h2>☢️ Anti-Nuke Schutz</h2>
+             <form action="/save_config" method="POST" class="card">
+                <input type="hidden" name="config_type" value="anti-nuke">
+                
+                <h3>Notfallmaßnahmen</h3>
+                <div class="toggle-container">
+                    <label for="anti_nuke_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Nuke System aktivieren (Empfohlen):</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="anti_nuke_enabled_input" name="anti_nuke_enabled" 
+                               {% if current_config.get('anti_nuke_enabled') %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <label for="anti_nuke_threshold">Schwellenwert (Aktionen pro Minute für Ban):</label>
+                <input type="text" id="anti_nuke_threshold" name="anti_nuke_threshold" 
+                       value="{{ current_config.get('anti_nuke_threshold', '5') }}"
+                       placeholder="Z.B. 5: Nutzer wird nach 5 Banns/Kicks/Channel-Löschungen pro Minute gebannt.">
+
+                <h3>Zusatzschutz</h3>
+                <div class="toggle-container">
+                    <label for="antivirus_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Datei-Antivirus (Scannt Anhänge):</label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="antivirus_enabled_input" name="antivirus_enabled" 
+                               {% if current_config.get('antivirus_enabled') %} checked {% endif %}>
+                        <span class="slider round"></span>
+                    </label>
+                </div>
+
+                <button type="submit" class="submit-button">Einstellungen speichern</button>
+            </form>
+        </div>
+
         <div id="logging" class="tab-content">
             <h2>⚙️ Logging-Einstellungen</h2>
              <form action="/save_config" method="POST" class="card">
                 <input type="hidden" name="config_type" value="logging">
+                
                 <h3>Kanal</h3>
                 <label for="logging_channel">Logging-Kanal (ID):</label>
                 <input type="text" id="logging_channel" name="logging_channel" 
@@ -348,17 +467,16 @@
              const urlParams = new URLSearchParams(window.location.search);
              const activeTabId = urlParams.get('tab') || 'overview';
              
-             // Finde das korrespondierende Navigationselement
              const activeNavItem = document.querySelector(`.nav-item[data-tab-id="${activeTabId}"]`);
              
-             // Standardfall: Wähle Übersicht
-             if (!activeNavItem) {
-                 document.querySelector(`.nav-item[data-tab-id="overview"]`).click();
-                 return;
+             if (activeNavItem) {
+                 showTab(activeTabId, activeNavItem);
+             } else {
+                 const overviewItem = document.querySelector(`.nav-item[data-tab-id="overview"]`);
+                 if (overviewItem) {
+                     showTab('overview', overviewItem);
+                 }
              }
-             
-             // Zeige den korrekten Tab an (simuliere Klick auf das Navigationselement)
-             showTab(activeTabId, activeNavItem);
         });
     </script>
 </body>
