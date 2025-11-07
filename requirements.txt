@@ -1,4 +1,12 @@
+# Flask und Hilfsmodule
 Flask
-requests-oauthlib
+requests
 gunicorn
+
+# Firebase/Firestore Abhängigkeiten
+firebase-admin
 google-cloud-firestore
+
+# Sicherheit
+PyJWT
+cryptography
