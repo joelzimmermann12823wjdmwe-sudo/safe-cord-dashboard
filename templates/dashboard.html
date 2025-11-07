@@ -3,305 +3,132 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe-Cord Dashboard</title>
-    <!-- Nimmt an, dass Sie einen dunklen Modus mit CSS-Variablen verwenden -->
+    <title>Safe-Cord Dashboard - {{ guild.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --background-color: #1e1e1e;
-            --text-color: #f0f0f0;
-            --secondary-text-color: #b0b0b0;
-            --card-color: #2d2d30;
-            --header-color: #3e3e40;
-            --button-primary: #5865f2;
-            --button-hover: #4752c4;
-            --success-color: #43b581;
-            --error-color: #f04747;
-            --border-color: #3a3a3d;
-            font-family: 'Inter', sans-serif;
-        }
-
-        body {
-            background-color: var(--background-color);
-            color: var(--text-color);
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-
-        .header {
-            background-color: var(--header-color);
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-            text-align: center;
-        }
-
-        .guild-card {
-            background-color: var(--card-color);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 1px solid var(--border-color);
-        }
-
-        .tab-button {
-            background-color: var(--header-color);
-            color: var(--secondary-text-color);
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            margin-right: 5px;
-            transition: background-color 0.2s;
-        }
-
-        .tab-button:hover, .tab-button.active {
-            background-color: var(--button-primary);
-            color: white;
-        }
-
-        .tab-content {
-            padding-top: 20px;
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 0;
-            border-bottom: 1px dashed var(--border-color);
-        }
-        
-        /* Allgemeiner Button-Stil für 'Speichern' */
-        .save-button {
-            background-color: var(--button-primary);
-            color: white;
-            padding: 8px 15px;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: background-color 0.2s;
-        }
-
-        .save-button:hover {
-            background-color: var(--button-hover);
-        }
-
-        .setting-label {
-            font-weight: bold;
-        }
-
-        /* Schalter-Stil für Checkboxen */
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 45px;
-            height: 25px;
-        }
-
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--secondary-text-color);
-            transition: .4s;
-            border-radius: 25px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 17px;
-            width: 17px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background-color: var(--success-color);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(20px);
-        }
+        body { font-family: 'Inter', sans-serif; background-color: #1f2937; color: #f9fafb; }
+        .card { background-color: #374151; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1); }
+        .toggle-switch { transition: all 0.3s ease; }
+        .toggle-switch:checked { background-color: #10b981; }
+        .toggle-switch:checked + .slider { transform: translateX(20px); }
+        .slider { transition: transform 0.3s ease; }
     </style>
 </head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>Willkommen im Safe-Cord Dashboard, {{ user_name }}!</h1>
-            <p>Verwalten Sie Ihre Discord-Server-Einstellungen.</p>
-            <a href="/logout" class="save-button" style="background-color: var(--error-color);">Ausloggen</a>
-        </div>
+<body class="p-4 sm:p-8">
+    
+    <div class="max-w-4xl mx-auto">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-white mb-2">
+                <span class="text-emerald-400">Safe-Cord</span> Konfiguration
+            </h1>
+            <p class="text-xl text-gray-300">
+                Gilde: {{ guild.name }}
+            </p>
+            <a href="{{ url_for('index') }}" class="text-blue-400 hover:text-blue-300 text-sm mt-2 block">
+                &larr; Zurück zur Serverauswahl
+            </a>
+        </header>
 
-        {% if guilds|length == 0 %}
-            <p>Sie sind derzeit kein Administrator von Servern. Nur Server, die Sie verwalten, werden hier angezeigt.</p>
-        {% endif %}
+        <form method="POST" action="{{ url_for('dashboard', guild_id=guild.id) }}" class="space-y-8">
 
-        {% for guild in guilds %}
-            <!-- Nur Gilden anzeigen, bei denen der Benutzer der Besitzer ist oder Admin-Rechte (8, 40) hat -->
-            {% if guild.owner_id == session["user_id"] or guild.permissions in (8, 40) %}
-                <div class="guild-card" id="guild-card-{{ guild.id }}">
-                    <h2 style="margin-top: 0;">{{ guild.name }} <span style="font-size: 0.7em; color: var(--secondary-text-color);">(ID: {{ guild.id }})</span></h2>
+            <div class="card p-6 rounded-xl space-y-4">
+                <h2 class="text-2xl font-semibold border-b border-gray-600 pb-3 mb-4 text-emerald-400">
+                    🛡️ Sicherheits-Module steuern
+                </h2>
 
-                    <!-- Tab-Navigation -->
-                    <div class="tab-buttons" id="tabs-{{ guild.id }}">
-                        <button class="tab-button active" onclick="openTab('{{ guild.id }}', 'roles')">Rollen-Einstellungen</button>
-                        <button class="tab-button" onclick="openTab('{{ guild.id }}', 'channels')">Kanal-Einstellungen</button>
-                        <button class="tab-button" onclick="openTab('{{ guild.id }}', 'users')">Benutzer-Einstellungen</button>
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-700">
+                    <div>
+                        <label for="anti_nuke_active" class="text-lg font-medium">Anti-Nuke Schutz</label>
+                        <p class="text-sm text-gray-400">Schützt vor schnellen, massiven Angriffen (Bans/Kicks/Kanallöschungen).</p>
                     </div>
-
-                    <!-- -------------------------- -->
-                    <!-- Sektion 1: Rollen-Einstellungen -->
-                    <!-- -------------------------- -->
-                    <div id="roles-{{ guild.id }}" class="tab-content active">
-                        <h3>Rollen-Einstellungen</h3>
-                        
-                        <form id="form-roles-{{ guild.id }}" method="POST" action="/save_settings">
-                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
-                            <input type="hidden" name="setting_type" value="roles">
-
-                            {% for role in guild.roles %}
-                                <div class="setting-row">
-                                    <span class="setting-label">{{ role.name }} (ID: {{ role.id }})</span>
-                                    <label class="switch">
-                                        <!-- Der Name des Eingabefelds muss eindeutig sein -->
-                                        <input type="checkbox" name="roles_setting_{{ role.id }}" {% if settings.get('roles', {}).get(role.id|string) %} checked {% endif %}>
-                                        <span class="slider"></span>
-                                    </label>
-                                </div>
-                            {% endfor %}
-
-                            <button type="submit" class="save-button" style="margin-top: 15px;">Rollen-Einstellungen speichern</button>
-                        </form>
+                    <div class="mt-2 sm:mt-0">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="anti_nuke_active" id="anti_nuke_active" class="sr-only peer toggle-switch"
+                                {% if settings.modules.anti_nuke.active %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all slider"></div>
+                        </label>
                     </div>
+                </div>
 
-                    <!-- -------------------------- -->
-                    <!-- Sektion 2: Kanal-Einstellungen -->
-                    <!-- -------------------------- -->
-                    <div id="channels-{{ guild.id }}" class="tab-content">
-                        <h3>Kanal-Einstellungen</h3>
-                        
-                        <form id="form-channels-{{ guild.id }}" method="POST" action="/save_settings">
-                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
-                            <input type="hidden" name="setting_type" value="channels">
-
-                            {% for channel in guild.channels %}
-                                <!-- Nur Text- oder Sprachkanäle anzeigen, keine Kategorien -->
-                                {% if channel.type in (0, 2) %}
-                                    <div class="setting-row">
-                                        <span class="setting-label">#{{ channel.name }} (ID: {{ channel.id }})</span>
-                                        <label class="switch">
-                                            <input type="checkbox" name="channels_setting_{{ channel.id }}" {% if settings.get('channels', {}).get(channel.id|string) %} checked {% endif %}>
-                                            <span class="slider"></span>
-                                        </label>
-                                    </div>
-                                {% endif %}
-                            {% endfor %}
-
-                            <button type="submit" class="save-button" style="margin-top: 15px;">Kanal-Einstellungen speichern</button>
-                        </form>
+                <div class="space-y-4 pt-2">
+                    <div class="flex flex-col sm:flex-row gap-4">
+                        <div class="flex-1">
+                            <label for="anti_nuke_limit" class="block text-sm font-medium text-gray-300">Max. Aktionen (Limit)</label>
+                            <input type="number" name="anti_nuke_limit" id="anti_nuke_limit"
+                                   value="{{ settings.modules.anti_nuke.limit }}" required
+                                   class="mt-1 block w-full rounded-md border-gray-600 bg-gray-600 text-white shadow-sm p-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                                   min="1" max="100">
+                        </div>
+                        <div class="flex-1">
+                            <label for="anti_nuke_time_window" class="block text-sm font-medium text-gray-300">Zeitfenster in Sekunden</label>
+                            <input type="number" name="anti_nuke_time_window" id="anti_nuke_time_window"
+                                   value="{{ settings.modules.anti_nuke.time_window }}" required
+                                   class="mt-1 block w-full rounded-md border-gray-600 bg-gray-600 text-white shadow-sm p-2 focus:ring-emerald-500 focus:border-emerald-500 sm:text-sm"
+                                   min="1" max="60">
+                        </div>
                     </div>
-
-                    <!-- -------------------------- -->
-                    <!-- Sektion 3: Benutzer-Einstellungen (Beispiel) -->
-                    <!-- -------------------------- -->
-                    <div id="users-{{ guild.id }}" class="tab-content">
-                        <h3>Benutzer-Einstellungen (Beispiel)</h3>
-                        <p style="color: var(--secondary-text-color);">Hier könnten Sie individuelle Einstellungen für bestimmte Benutzer verwalten, z.B. Whitelisting.</p>
-                        
-                        <form id="form-users-{{ guild.id }}" method="POST" action="/save_settings">
-                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
-                            <input type="hidden" name="setting_type" value="users">
-                            
-                            <!-- Platzhalter für eine Benutzereinstellung -->
-                            <div class="setting-row">
-                                <span class="setting-label">Globaler Schutz aktiviert</span>
-                                <label class="switch">
-                                    <input type="checkbox" name="users_global_protection" {% if settings.get('global', {}).get('protection_on') %} checked {% endif %}>
-                                    <span class="slider"></span>
-                                </label>
-                            </div>
-
-                            <button type="submit" class="save-button" style="margin-top: 15px;">Benutzer-Einstellungen speichern</button>
-                        </form>
+                    <p class="text-xs text-gray-400">Der Bot bannt den Benutzer automatisch, wenn er das Limit innerhalb des Zeitfensters überschreitet.</p>
+                </div>
+                
+                <hr class="border-gray-600">
+                
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3">
+                    <div>
+                        <label for="lockdown_active" class="text-lg font-medium">Notfall-Lockdown Befehl</label>
+                        <p class="text-sm text-gray-400">Aktiviert den Slash-Befehl `/lockdown An/Aus` für Admins.</p>
                     </div>
+                    <div class="mt-2 sm:mt-0">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="lockdown_active" id="lockdown_active" class="sr-only peer toggle-switch"
+                                {% if settings.modules.lockdown.active %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all slider"></div>
+                        </label>
+                    </div>
+                </div>
+            </div>
 
-                </div> <!-- Ende .guild-card -->
-            {% endif %}
-        {% endfor %} <!-- Ende der Guilds-Schleife -->
+            <div class="card p-6 rounded-xl space-y-4">
+                <h2 class="text-2xl font-semibold border-b border-gray-600 pb-3 mb-4 text-emerald-400">
+                    🔑 Rollen-Schutz Konfiguration
+                </h2>
+
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-3 border-b border-gray-700">
+                    <div>
+                        <label for="roles_protection_active" class="text-lg font-medium">Rollen-Schutz Modul</label>
+                        <p class="text-sm text-gray-400">Aktiviert die automatische Löschung von Nachrichten für Benutzer mit ausgewählten Rollen.</p>
+                    </div>
+                    <div class="mt-2 sm:mt-0">
+                        <label class="relative inline-flex items-center cursor-pointer">
+                            <input type="checkbox" name="roles_protection_active" id="roles_protection_active" class="sr-only peer toggle-switch"
+                                {% if settings.modules.roles_protection.active %}checked{% endif %}>
+                            <div class="w-11 h-6 bg-gray-600 rounded-full peer peer-focus:ring-4 peer-focus:ring-emerald-300 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all slider"></div>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="pt-4">
+                    <p class="text-gray-300 mb-3">Rollen auswählen, deren Nachrichten gelöscht werden sollen (Simulierte Rollen):</p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {% for role in roles %}
+                            <label for="role_{{ role.id }}" class="flex items-center card p-3 rounded-lg hover:bg-gray-600 cursor-pointer">
+                                <input type="checkbox" name="protected_roles" id="role_{{ role.id }}" value="{{ role.id }}"
+                                    class="h-5 w-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    {% if role.is_protected %}checked{% endif %}>
+                                <span class="ml-3 text-sm font-medium">{{ role.name }}</span>
+                            </label>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="pt-4">
+                <button type="submit" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition duration-150 shadow-lg">
+                    Einstellungen speichern
+                </button>
+            </div>
+        </form>
     </div>
-
-    <!-- JavaScript für die Tab-Steuerung -->
-    <script>
-        function openTab(guildId, tabName) {
-            // 1. Die spezifische Guild-Card als Elternelement finden
-            const guildCard = document.getElementById('guild-card-' + guildId);
-            if (!guildCard) return; // Sicherheits-Check
-
-            // 2. Alle Tab-Inhalte in dieser Guild-Card ausblenden
-            const tabContents = guildCard.querySelectorAll('.tab-content');
-            tabContents.forEach(content => {
-                content.classList.remove('active');
-            });
-
-            // 3. Alle Tab-Buttons in dieser Guild-Card deaktivieren
-            const tabButtons = guildCard.querySelectorAll('.tab-button');
-            tabButtons.forEach(button => {
-                button.classList.remove('active');
-            });
-
-            // 4. Den ausgewählten Tab-Inhalt anzeigen
-            const activeContent = document.getElementById(tabName + '-' + guildId);
-            if (activeContent) {
-                activeContent.classList.add('active');
-            }
-
-            // 5. Den angeklickten Button aktivieren
-            // Wir verwenden den data-tab-name-Attribut-Selektor, um den Button zuverlässig zu finden.
-            // Zuerst müssen wir sicherstellen, dass wir das Attribut zum Button hinzufügen.
-            // Da wir nur den onclick-Handler verwenden, können wir den Button über den onclick-Text finden:
-            const activeButton = guildCard.querySelector(`button[onclick*="'${tabName}'"]`);
-            if (activeButton) {
-                activeButton.classList.add('active');
-            }
-        }
-
-        // Standardmäßig den ersten Tab beim Laden anzeigen
-        window.onload = function() {
-            // Finde die erste Gildenkarte
-            const firstGuildCard = document.querySelector('.guild-card');
-            
-            // Wenn eine Gildenkarte existiert, klicke auf den ersten Tab-Button darin, um die Ansicht zu initialisieren
-            if (firstGuildCard) {
-                const firstTabButton = firstGuildCard.querySelector('.tab-buttons .tab-button');
-                if (firstTabButton) {
-                    firstTabButton.click(); // Klickt auf den ersten Button, um die Ansicht zu initialisieren
-                }
-            }
-        }
-    </script>
 </body>
 </html>

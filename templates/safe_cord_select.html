@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Safe-Cord Dashboard - Serverauswahl</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Angepasste Styles für das dunkle Design */
+        body { font-family: 'Inter', sans-serif; background-color: #121212; color: #f0f0f0; }
+        .sidebar { background-color: #1e1e1e; width: 60px; height: 100vh; position: fixed; top: 0; left: 0; padding: 10px 0; display: flex; flex-direction: column; align-items: center; }
+        .main-content { margin-left: 60px; padding: 30px; }
+        .status-card { background-color: #1e1e1e; border-radius: 8px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); transition: transform 0.2s; }
+        .status-card:hover { transform: translateY(-3px); }
+        .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+        .online { background-color: #10b981; } /* Emerald green */
+        .info { background-color: #3b82f6; } /* Blue */
+        .brand-text { color: #f0f0f0; font-weight: 800; font-size: 1.5rem; }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <a href="{{ url_for('index') }}" class="mb-6">
+            <div class="text-white text-3xl font-bold">SC</div>
+        </a>
+        <a href="{{ url_for('logout') }}" class="mt-auto p-2" title="Abmelden">
+            <svg class="w-6 h-6 text-gray-400 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+        </a>
+    </div>
+
+    <div class="main-content">
+        <header class="flex justify-between items-center mb-10">
+            <h1 class="brand-text">Safe-Cord</h1>
+            <div class="flex items-center space-x-3">
+                <span class="text-lg">{{ user.username }}</span>
+                <img src="https://cdn.discordapp.com/avatars/{{ user.id }}/{{ user.avatar }}.png?size=64" alt="Avatar" class="w-8 h-8 rounded-full">
+            </div>
+        </header>
+
+        <div class="bg-[#1e1e1e] p-6 rounded-lg mb-8">
+            <h2 class="text-2xl font-semibold mb-2">Guten Morgen, {{ user.username }}</h2>
+            <div class="flex justify-between items-center bg-yellow-600/20 text-yellow-300 p-3 rounded-md border border-yellow-700">
+                <p>Die Serverliste kann momentan nicht aktualisiert werden. Melde dich neu an, damit die Serverliste aktualisiert werden kann.</p>
+                <a href="{{ url_for('logout') }}" class="ml-4 px-3 py-1 bg-gray-700 hover:bg-gray-600 text-white rounded-md flex items-center">
+                    <span class="mr-2">Anmelden</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                </a>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Status</h2>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-10">
+            
+            <div class="status-card p-4 text-center">
+                <p class="text-2xl font-bold mb-1">website</p>
+                <p class="text-sm font-semibold">
+                    <span class="status-dot online"></span>
+                    <span class="text-[#10b981]">ONLINE</span>
+                </p>
+            </div>
+            
+            <div class="status-card p-4 text-center">
+                <p class="text-2xl font-bold mb-1">Dashboard</p>
+                <p class="text-sm font-semibold">
+                    <span class="status-dot online"></span>
+                    <span class="text-[#10b981]">ONLINE</span>
+                </p>
+            </div>
+            
+             <div class="status-card p-4 text-center">
+                <p class="text-2xl font-bold mb-1">Bot</p>
+                <p class="text-sm font-semibold">
+                    <span class="status-dot online"></span>
+                    <span class="text-[#10b981]">ONLINE</span>
+                </p>
+            </div>
+
+            <div class="status-card p-4 text-center bg-[#1e1e1e]/80">
+                <p class="text-2xl font-bold mb-1">Status Informationen</p>
+                 <p class="text-sm font-semibold">
+                    <span class="status-dot info"></span>
+                    <span class="text-[#3b82f6]">INFO</span>
+                </p>
+            </div>
+        </div>
+
+        <h2 class="text-xl font-semibold mb-4 border-b border-gray-700 pb-2">Deine Server (Admin)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            {% if guilds %}
+                {% for guild in guilds %}
+                    <a href="{{ url_for('dashboard', guild_id=guild.id) }}" class="status-card p-4 flex items-center space-x-4 hover:bg-gray-700/50">
+                        {% if guild.icon %}
+                            <img src="https://cdn.discordapp.com/icons/{{ guild.id }}/{{ guild.icon }}.png?size=64" alt="Gilden Icon" class="w-12 h-12 rounded-full">
+                        {% else %}
+                            <div class="w-12 h-12 rounded-full bg-gray-600 flex items-center justify-center text-lg font-bold">{{ guild.name[0] }}</div>
+                        {% endif %}
+                        
+                        <div>
+                            <p class="text-lg font-semibold">{{ guild.name }}</p>
+                            <p class="text-sm text-gray-400">Zur Konfiguration</p>
+                        </div>
+                    </a>
+                {% endfor %}
+            {% else %}
+                <p class="text-gray-400">Du bist auf keinem Server, den du verwalten kannst. Bitte lade den Bot auf deinen Server ein.</p>
+            {% endif %}
+
+        </div>
+    </div>
+</body>
+</html>
