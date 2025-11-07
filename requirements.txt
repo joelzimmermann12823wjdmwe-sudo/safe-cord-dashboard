@@ -1,7 +1,4 @@
-flask
-gunicorn
-requests
+Flask
 requests-oauthlib
-psycopg2-binary
-certifi
-python-dotenv==1.0.0
+gunicorn
+google-cloud-firestore
