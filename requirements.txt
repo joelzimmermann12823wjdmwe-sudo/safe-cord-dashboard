@@ -1,8 +1,0 @@
-Flask
-requests
-gunicorn
-python-dotenv 
-firebase-admin
-google-cloud-firestore
-PyJWT
-cryptography
