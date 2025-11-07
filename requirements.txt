@@ -1,0 +1,8 @@
+Flask
+gunicorn  
+requests_oauthlib
+python-dotenv 
+firebase-admin
+google-cloud-firestore
+PyJWT
+cryptography
