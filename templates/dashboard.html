@@ -3,481 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Safe-Cord Dashboard | {{ user_info.username }}</title>
+    <title>Safe-Cord Dashboard</title>
+    <!-- Nimmt an, dass Sie einen dunklen Modus mit CSS-Variablen verwenden -->
     <style>
-        /* GALAXY / MODERN DARK PALETTE */
         :root {
-            --bg-dark: #121212; 
-            --bg-card: #1F1F1F; 
-            --accent-primary: #FFB74D; 
-            --accent-secondary: #00bcd4; 
-            --text-light: #E0E0E0; 
-            --text-muted: #A0A0A0; 
-            --error: #FF6B6B;
-            --success: #4CAF50;
-            --warning: #FFC107; 
+            --background-color: #1e1e1e;
+            --text-color: #f0f0f0;
+            --secondary-text-color: #b0b0b0;
+            --card-color: #2d2d30;
+            --header-color: #3e3e40;
+            --button-primary: #5865f2;
+            --button-hover: #4752c4;
+            --success-color: #43b581;
+            --error-color: #f04747;
+            --border-color: #3a3a3d;
+            font-family: 'Inter', sans-serif;
         }
 
-        /* [DESIGN CSS] */
-        body { 
-            font-family: 'Inter', sans-serif; 
-            background-color: var(--bg-dark); 
-            color: var(--text-light); 
-            margin: 0; 
-            padding: 0; 
-            display: flex; 
-            min-height: 100vh; 
+        body {
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
         }
-        .sidebar { 
-            width: 250px; 
-            background-color: var(--bg-card); 
-            padding: 20px; 
-            box-shadow: 4px 0 15px rgba(0, 0, 0, 0.4); 
-            position: fixed; 
-            height: 100%; 
-            overflow-y: auto; 
-            border-right: 2px solid var(--accent-primary); 
-            z-index: 10; 
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
         }
-        .sidebar h2 { 
-            color: var(--accent-primary); 
-            margin-top: 0; 
-            border-bottom: 2px solid var(--accent-secondary); 
-            padding-bottom: 15px; 
-            margin-bottom: 30px; 
-            text-shadow: 0 0 5px rgba(255, 183, 77, 0.5); 
+
+        .header {
+            background-color: var(--header-color);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            text-align: center;
         }
-        .nav-item { 
-            padding: 12px 15px; 
-            margin-bottom: 8px; 
-            border-radius: 8px; 
-            color: var(--text-light); 
-            text-decoration: none; 
+
+        .guild-card {
+            background-color: var(--card-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        .tab-button {
+            background-color: var(--header-color);
+            color: var(--secondary-text-color);
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-right: 5px;
+            transition: background-color 0.2s;
+        }
+
+        .tab-button:hover, .tab-button.active {
+            background-color: var(--button-primary);
+            color: white;
+        }
+
+        .tab-content {
+            padding-top: 20px;
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .setting-row {
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            transition: background-color 0.2s, color 0.2s, box-shadow 0.2s; 
+            padding: 10px 0;
+            border-bottom: 1px dashed var(--border-color);
         }
-        .nav-item:hover { 
-            background-color: rgba(255, 183, 77, 0.1);
-            color: var(--accent-primary); 
-        }
-        .nav-item.active { 
-            background-color: var(--accent-primary); 
-            color: var(--bg-dark); 
+        
+        /* Allgemeiner Button-Stil für 'Speichern' */
+        .save-button {
+            background-color: var(--button-primary);
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
             font-weight: bold;
-            box-shadow: 0 0 15px rgba(255, 183, 77, 0.6); 
-        }
-        .main-content { 
-            margin-left: 250px; 
-            flex-grow: 1; 
-            padding: 40px; 
-        }
-        .welcome-header { 
-            color: var(--accent-secondary); 
-            margin-bottom: 30px; 
-            text-shadow: 0 0 8px rgba(0, 188, 212, 0.5);
-        }
-        .card { 
-            background-color: var(--bg-card); 
-            border-radius: 12px; 
-            padding: 25px; 
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3); 
-            margin-bottom: 20px; 
-            border: 1px solid var(--bg-card); 
-            transition: transform 0.2s, box-shadow 0.3s;
-        }
-        .card:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(0, 0, 0, 0.5); }
-        .card h3 { 
-            color: var(--accent-primary); 
-            margin-top: 0; 
-            border-bottom: 1px dashed var(--text-muted); 
-            padding-bottom: 10px; 
-            margin-bottom: 15px; 
-        }
-        
-        /* FORM & BUTTON STYLES */
-        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--accent-secondary); }
-        input[type="text"], textarea, select {
-            width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid var(--text-muted);
-            background-color: var(--bg-dark); color: var(--text-light); border-radius: 6px; box-sizing: border-box;
-            transition: border-color 0.2s;
-        }
-        input[type="text"]:focus, textarea:focus, select:focus {
-            border-color: var(--accent-primary); outline: none; box-shadow: 0 0 5px var(--accent-primary);
-        }
-        .submit-button {
-            padding: 12px 25px; background-color: var(--accent-primary); color: var(--bg-dark); border: none;
-            border-radius: 6px; cursor: pointer; font-weight: bold; letter-spacing: 1px;
-            transition: background-color 0.2s, box-shadow 0.2s;
-        }
-        .submit-button:hover {
-            background-color: #FF9800; 
-            box-shadow: 0 0 15px var(--accent-primary);
+            transition: background-color 0.2s;
         }
 
-        /* TOGGLE SWITCH */
-        .toggle-container { 
-            display: flex; 
-            align-items: center; 
-            margin-bottom: 20px; 
-            gap: 15px;
-            padding: 10px;
-            border: 1px dashed var(--text-muted);
-            border-radius: 6px;
+        .save-button:hover {
+            background-color: var(--button-hover);
         }
-        .toggle-switch {
-            position: relative; display: inline-block; width: 60px; height: 34px; margin-left: auto;
+
+        .setting-label {
+            font-weight: bold;
         }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+
+        /* Schalter-Stil für Checkboxen */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 45px;
+            height: 25px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
         .slider {
-            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-            background-color: var(--error); 
-            transition: .4s; border-radius: 34px;
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--secondary-text-color);
+            transition: .4s;
+            border-radius: 25px;
         }
-        .slider:before {
-            position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px;
-            background-color: var(--text-light); transition: .4s; border-radius: 50%;
-        }
-        input:checked + .slider { 
-            background-color: var(--success); 
-        }
-        input:checked + .slider:before { transform: translateX(26px); }
-        
-        /* TAB-CONTENT */
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-        
-        /* FOOTER */
-        .user-footer { 
-            position: absolute; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%;
-            padding: 15px 20px; 
-            box-sizing: border-box;
-            background-color: var(--bg-dark); 
-            border-top: 1px solid var(--accent-secondary); 
-        }
-        .user-footer p { margin: 5px 0; font-size: 0.9em; }
-        .user-footer a { color: var(--accent-primary); text-decoration: none; transition: color 0.2s; }
-        .user-footer a:hover { color: var(--text-light); text-shadow: 0 0 5px var(--accent-primary);}
 
-        /* FÜR MOBILE */
-        @media (max-width: 768px) {
-            body { flex-direction: column; }
-            .sidebar { 
-                width: 100%; 
-                height: auto; 
-                position: relative; 
-                border-right: none; 
-                border-bottom: 2px solid var(--accent-primary);
-                min-height: auto; 
-                padding-bottom: 15px;
-            }
-            .sidebar h2 { display: none; } 
-            .sidebar > .card:first-child { margin-top: 0; }
-            
-            .nav-container {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 10px;
-                justify-content: center;
-                margin-bottom: 10px;
-            }
-            .nav-item { 
-                flex-grow: 1; 
-                justify-content: center;
-                text-align: center;
-                padding: 10px 15px;
-            }
-            .main-content { 
-                margin-left: 0; 
-                padding: 20px; 
-            }
-            .user-footer {
-                position: relative;
-                width: 100%;
-                bottom: auto;
-                left: auto;
-                text-align: center;
-                padding: 15px 0;
-            }
-            .card {
-                flex-direction: column;
-            }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 17px;
+            width: 17px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--success-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
         }
     </style>
 </head>
 <body>
-
-    <div class="sidebar">
-        <h2>Safe-Cord</h2>
-        
-        <div class="card" style="margin-bottom: 20px; padding: 10px; border: 1px solid var(--accent-secondary); box-shadow: none;">
-            <select style="width: 100%; padding: 8px; background-color: var(--bg-dark); color: var(--text-light); border: none; border-radius: 6px;">
-                {% if session.guilds %}
-                    {% for guild in session.guilds %}
-                        <option value="{{ guild.id }}">{{ guild.name }}</option>
-                    {% endfor %}
-                {% else %}
-                    <option>Kein Server gefunden</option>
-                {% endif %}
-            </select>
+    <div class="container">
+        <div class="header">
+            <h1>Willkommen im Safe-Cord Dashboard, {{ user_name }}!</h1>
+            <p>Verwalten Sie Ihre Discord-Server-Einstellungen.</p>
+            <a href="/logout" class="save-button" style="background-color: var(--error-color);">Ausloggen</a>
         </div>
 
-        <div class="nav-container">
-            <a href="#overview" class="nav-item" data-tab-id="overview" onclick="showTab('overview', this)">
-                <span style="font-size: 1.2em;">🏠</span> Übersicht
-            </a>
-            <a href="#welcome" class="nav-item" data-tab-id="welcome" onclick="showTab('welcome', this)">
-                <span style="font-size: 1.2em;">👋</span> Willkommen/Rollen
-            </a>
-            <a href="#moderation" class="nav-item" data-tab-id="moderation" onclick="showTab('moderation', this)">
-                <span style="font-size: 1.2em;">🛡️</span> Moderation
-            </a>
-            <a href="#security" class="nav-item" data-tab-id="security" onclick="showTab('security', this)">
-                <span style="font-size: 1.2em;">🔒</span> Sicherheit
-            </a>
-            <a href="#antinuke" class="nav-item" data-tab-id="antinuke" onclick="showTab('antinuke', this)">
-                <span style="font-size: 1.2em;">☢️</span> Anti-Nuke
-            </a>
-            <a href="#logging" class="nav-item" data-tab-id="logging" onclick="showTab('logging', this)">
-                <span style="font-size: 1.2em;">⚙️</span> Logging
-            </a>
-        </div>
-        
-        <div class="user-footer">
-            <p>Eingeloggt als: <strong>{{ user_info.username }}</strong></p>
-            <p><a href="/logout">Logout</a></p>
-        </div>
-    </div>
-
-    <div class="main-content">
-        <h1 class="welcome-header">Kontrollzentrum | {{ user_info.username }}</h1>
-        
-        {% if message %}
-        <div class="card" style="background-color: var(--success); color: var(--bg-dark); padding: 15px; margin-bottom: 20px; font-weight: bold; border: none; box-shadow: 0 0 10px rgba(76, 175, 80, 0.8);">
-            {{ message }}
-        </div>
+        {% if guilds|length == 0 %}
+            <p>Sie sind derzeit kein Administrator von Servern. Nur Server, die Sie verwalten, werden hier angezeigt.</p>
         {% endif %}
 
-        <div id="overview" class="tab-content">
-            <h2>🏠 Bot-Status Übersicht</h2>
-            <div class="card" style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px;">
-                <div style="flex: 1; min-width: 200px;">
-                    <h3>Sicherheitslevel</h3>
-                    <p style="font-size: 1.5em; color: var(--warning);">
-                        {% if current_config.get('anti_nuke_enabled') %} HOCH {% else %} MITTEL {% endif %}
-                    </p>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <h3>Anti-Spam</h3>
-                    <p style="font-size: 1.5em; color: {% if current_config.get('antispam_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
-                        {% if current_config.get('antispam_enabled') %} AN {% else %} AUS {% endif %}
-                    </p>
-                </div>
-                <div style="flex: 1; min-width: 200px;">
-                    <h3>Anti-Nuke</h3>
-                    <p style="font-size: 1.5em; color: {% if current_config.get('anti_nuke_enabled') %} var(--success) {% else %} var(--error) {% endif %}" >
-                        {% if current_config.get('anti_nuke_enabled') %} AN {% else %} AUS {% endif %}
-                    </p>
-                </div>
-            </div>
-            <div class="card">
-                <h3>📢 Status-Hinweis</h3>
-                <p>Das Dashboard ist nun vollständig auf die **Firestore-Datenbank** umgestellt. Alle Einstellungen werden persistent gespeichert. Wähle links im Menü eine Konfigurationsseite aus, um deinen Bot einzurichten.</p>
-            </div>
-        </div>
+        {% for guild in guilds %}
+            <!-- Nur Gilden anzeigen, bei denen der Benutzer der Besitzer ist oder Admin-Rechte (8, 40) hat -->
+            {% if guild.owner_id == session["user_id"] or guild.permissions in (8, 40) %}
+                <div class="guild-card" id="guild-card-{{ guild.id }}">
+                    <h2 style="margin-top: 0;">{{ guild.name }} <span style="font-size: 0.7em; color: var(--secondary-text-color);">(ID: {{ guild.id }})</span></h2>
 
-        <div id="welcome" class="tab-content">
-            <h2>👋 Willkommen & Auto-Rollen</h2>
-            <form action="/save_config" method="POST" class="card">
-                <input type="hidden" name="config_type" value="welcome">
-                
-                <h3>Willkommensnachricht</h3>
-                <label for="welcome_channel">Willkommens-Kanal (ID):</label>
-                <input type="text" id="welcome_channel" name="welcome_channel" 
-                       value="{{ current_config.get('welcome_channel', '') }}" 
-                       placeholder="z.B. 1234567890..." required>
-                
-                <label for="welcome_message">Nachricht:</label>
-                <textarea id="welcome_message" name="welcome_message" rows="5" 
-                          placeholder="Willkommen {user}! Viel Spaß auf {server}." 
-                          required>{{ current_config.get('welcome_message', '') }}</textarea>
-                
-                <h3>Auto-Rollen</h3>
-                <label for="autorole_id">Rolle nach Beitritt zuweisen (ID):</label>
-                <input type="text" id="autorole_id" name="autorole_id" 
-                       value="{{ current_config.get('autorole_id', '') }}" 
-                       placeholder="ID der Rolle, die automatisch zugewiesen wird (z.B. 9876543210)">
+                    <!-- Tab-Navigation -->
+                    <div class="tab-buttons" id="tabs-{{ guild.id }}">
+                        <button class="tab-button active" onclick="openTab('{{ guild.id }}', 'roles')">Rollen-Einstellungen</button>
+                        <button class="tab-button" onclick="openTab('{{ guild.id }}', 'channels')">Kanal-Einstellungen</button>
+                        <button class="tab-button" onclick="openTab('{{ guild.id }}', 'users')">Benutzer-Einstellungen</button>
+                    </div>
 
-                <button type="submit" class="submit-button">Einstellungen speichern</button>
-            </form>
-        </div>
+                    <!-- -------------------------- -->
+                    <!-- Sektion 1: Rollen-Einstellungen -->
+                    <!-- -------------------------- -->
+                    <div id="roles-{{ guild.id }}" class="tab-content active">
+                        <h3>Rollen-Einstellungen</h3>
+                        
+                        <form id="form-roles-{{ guild.id }}" method="POST" action="/save_settings">
+                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
+                            <input type="hidden" name="setting_type" value="roles">
 
-        <div id="moderation" class="tab-content">
-            <h2>🛡️ Moderations-System</h2>
-             <form action="/save_config" method="POST" class="card">
-                <input type="hidden" name="config_type" value="moderation">
-                
-                <h3>Automatischer Filter</h3>
-                <label for="mod_channel">Moderations-Log-Kanal (ID):</label>
-                <input type="text" id="mod_channel" name="mod_channel" 
-                       value="{{ current_config.get('mod_channel', '') }}"
-                       placeholder="Kanal für Warnungen und Logs (z.B. 1234...)">
-                
-                <div class="toggle-container">
-                    <label for="profanity_filter_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Profanity Filter (Schimpfwörter) aktivieren:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="profanity_filter_enabled_input" name="profanity_filter_enabled" 
-                               {% if current_config.get('profanity_filter_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                
-                <h3>Strafen</h3>
-                <label for="auto_mute_duration">Auto-Mute Dauer (Minuten):</label>
-                <input type="text" id="auto_mute_duration" name="auto_mute_duration" 
-                       value="{{ current_config.get('auto_mute_duration', '60') }}"
-                       placeholder="Dauer in Minuten für automatische Mutes (z.B. 60 für 1 Stunde)">
+                            {% for role in guild.roles %}
+                                <div class="setting-row">
+                                    <span class="setting-label">{{ role.name }} (ID: {{ role.id }})</span>
+                                    <label class="switch">
+                                        <!-- Der Name des Eingabefelds muss eindeutig sein -->
+                                        <input type="checkbox" name="roles_setting_{{ role.id }}" {% if settings.get('roles', {}).get(role.id|string) %} checked {% endif %}>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            {% endfor %}
 
-                <button type="submit" class="submit-button">Einstellungen speichern</button>
-            </form>
-        </div>
+                            <button type="submit" class="save-button" style="margin-top: 15px;">Rollen-Einstellungen speichern</button>
+                        </form>
+                    </div>
 
-        <div id="security" class="tab-content">
-            <h2>�� Erweiterte Sicherheits-Filter</h2>
-             <form action="/save_config" method="POST" class="card">
-                <input type="hidden" name="config_type" value="security">
-                
-                <h3>Nachrichten-Filter</h3>
-                
-                <div class="toggle-container">
-                    <label for="antispam_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Spam (schnelle, doppelte Nachrichten):</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="antispam_enabled_input" name="antispam_enabled" 
-                               {% if current_config.get('antispam_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
+                    <!-- -------------------------- -->
+                    <!-- Sektion 2: Kanal-Einstellungen -->
+                    <!-- -------------------------- -->
+                    <div id="channels-{{ guild.id }}" class="tab-content">
+                        <h3>Kanal-Einstellungen</h3>
+                        
+                        <form id="form-channels-{{ guild.id }}" method="POST" action="/save_settings">
+                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
+                            <input type="hidden" name="setting_type" value="channels">
 
-                <div class="toggle-container">
-                    <label for="invitation_filter_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Discord Einladungs-Filter:</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="invitation_filter_enabled_input" name="invitation_filter_enabled" 
-                               {% if current_config.get('invitation_filter_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-                
-                <div class="toggle-container">
-                    <label for="antilink_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Link (alle externen Links blocken):</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="antilink_enabled_input" name="antilink_enabled" 
-                               {% if current_config.get('antilink_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
+                            {% for channel in guild.channels %}
+                                <!-- Nur Text- oder Sprachkanäle anzeigen, keine Kategorien -->
+                                {% if channel.type in (0, 2) %}
+                                    <div class="setting-row">
+                                        <span class="setting-label">#{{ channel.name }} (ID: {{ channel.id }})</span>
+                                        <label class="switch">
+                                            <input type="checkbox" name="channels_setting_{{ channel.id }}" {% if settings.get('channels', {}).get(channel.id|string) %} checked {% endif %}>
+                                            <span class="slider"></span>
+                                        </label>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
 
-                <button type="submit" class="submit-button">Einstellungen speichern</button>
-            </form>
-        </div>
+                            <button type="submit" class="save-button" style="margin-top: 15px;">Kanal-Einstellungen speichern</button>
+                        </form>
+                    </div>
 
-        <div id="antinuke" class="tab-content">
-            <h2>☢️ Anti-Nuke Schutz</h2>
-             <form action="/save_config" method="POST" class="card">
-                <input type="hidden" name="config_type" value="anti-nuke">
-                
-                <h3>Notfallmaßnahmen</h3>
-                <div class="toggle-container">
-                    <label for="anti_nuke_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Anti-Nuke System aktivieren (Empfohlen):</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="anti_nuke_enabled_input" name="anti_nuke_enabled" 
-                               {% if current_config.get('anti_nuke_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
+                    <!-- -------------------------- -->
+                    <!-- Sektion 3: Benutzer-Einstellungen (Beispiel) -->
+                    <!-- -------------------------- -->
+                    <div id="users-{{ guild.id }}" class="tab-content">
+                        <h3>Benutzer-Einstellungen (Beispiel)</h3>
+                        <p style="color: var(--secondary-text-color);">Hier könnten Sie individuelle Einstellungen für bestimmte Benutzer verwalten, z.B. Whitelisting.</p>
+                        
+                        <form id="form-users-{{ guild.id }}" method="POST" action="/save_settings">
+                            <input type="hidden" name="guild_id" value="{{ guild.id }}">
+                            <input type="hidden" name="setting_type" value="users">
+                            
+                            <!-- Platzhalter für eine Benutzereinstellung -->
+                            <div class="setting-row">
+                                <span class="setting-label">Globaler Schutz aktiviert</span>
+                                <label class="switch">
+                                    <input type="checkbox" name="users_global_protection" {% if settings.get('global', {}).get('protection_on') %} checked {% endif %}>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
 
-                <label for="anti_nuke_threshold">Schwellenwert (Aktionen pro Minute für Ban):</label>
-                <input type="text" id="anti_nuke_threshold" name="anti_nuke_threshold" 
-                       value="{{ current_config.get('anti_nuke_threshold', '5') }}"
-                       placeholder="Z.B. 5: Nutzer wird nach 5 Banns/Kicks/Channel-Löschungen pro Minute gebannt.">
+                            <button type="submit" class="save-button" style="margin-top: 15px;">Benutzer-Einstellungen speichern</button>
+                        </form>
+                    </div>
 
-                <h3>Zusatzschutz</h3>
-                <div class="toggle-container">
-                    <label for="antivirus_enabled_input" style="color: var(--accent-secondary); font-weight: bold;">Datei-Antivirus (Scannt Anhänge):</label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="antivirus_enabled_input" name="antivirus_enabled" 
-                               {% if current_config.get('antivirus_enabled') %} checked {% endif %}>
-                        <span class="slider round"></span>
-                    </label>
-                </div>
-
-                <button type="submit" class="submit-button">Einstellungen speichern</button>
-            </form>
-        </div>
-
-        <div id="logging" class="tab-content">
-            <h2>⚙️ Logging-Einstellungen</h2>
-             <form action="/save_config" method="POST" class="card">
-                <input type="hidden" name="config_type" value="logging">
-                
-                <h3>Kanal</h3>
-                <label for="logging_channel">Logging-Kanal (ID):</label>
-                <input type="text" id="logging_channel" name="logging_channel" 
-                       value="{{ current_config.get('logging_channel', '') }}"
-                       placeholder="z.B. 1234567890..." required>
-                
-                <h3>Events (STRG gedrückt halten zum Mehrfachauswahl)</h3>
-                <label for="log_events">Zu loggende Events:</label>
-                <select id="log_events" name="log_events" multiple style="height: 150px;">
-                    {% set logged_events = current_config.get('log_events', []) %}
-                    <option value="member_join" {% if 'member_join' in logged_events %} selected {% endif %}>Mitglieder betreten</option>
-                    <option value="member_leave" {% if 'member_leave' in logged_events %} selected {% endif %}>Mitglieder verlassen</option>
-                    <option value="message_delete" {% if 'message_delete' in logged_events %} selected {% endif %}>Nachricht gelöscht</option>
-                    <option value="message_edit" {% if 'message_edit' in logged_events %} selected {% endif %}>Nachricht bearbeitet</option>
-                    <option value="role_update" {% if 'role_update' in logged_events %} selected {% endif %}>Rollen-Update</option>
-                </select>
-
-                <button type="submit" class="submit-button">Einstellungen speichern</button>
-            </form>
-        </div>
-        
+                </div> <!-- Ende .guild-card -->
+            {% endif %}
+        {% endfor %} <!-- Ende der Guilds-Schleife -->
     </div>
-    
+
+    <!-- JavaScript für die Tab-Steuerung -->
     <script>
-        // JavaScript für die Tab-Funktionalität und URL-Steuerung
-        function showTab(id, sender) {
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+        function openTab(guildId, tabName) {
+            // 1. Die spezifische Guild-Card als Elternelement finden
+            const guildCard = document.getElementById('guild-card-' + guildId);
+            if (!guildCard) return; // Sicherheits-Check
+
+            // 2. Alle Tab-Inhalte in dieser Guild-Card ausblenden
+            const tabContents = guildCard.querySelectorAll('.tab-content');
+            tabContents.forEach(content => {
+                content.classList.remove('active');
             });
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
+
+            // 3. Alle Tab-Buttons in dieser Guild-Card deaktivieren
+            const tabButtons = guildCard.querySelectorAll('.tab-button');
+            tabButtons.forEach(button => {
+                button.classList.remove('active');
             });
-            
-            document.getElementById(id).classList.add('active');
-            sender.classList.add('active');
-            
-            // Aktualisiere URL ohne Neuladen
-            history.pushState(null, '', `?tab=${id}`);
+
+            // 4. Den ausgewählten Tab-Inhalt anzeigen
+            const activeContent = document.getElementById(tabName + '-' + guildId);
+            if (activeContent) {
+                activeContent.classList.add('active');
+            }
+
+            // 5. Den angeklickten Button aktivieren
+            // Wir verwenden den data-tab-name-Attribut-Selektor, um den Button zuverlässig zu finden.
+            // Zuerst müssen wir sicherstellen, dass wir das Attribut zum Button hinzufügen.
+            // Da wir nur den onclick-Handler verwenden, können wir den Button über den onclick-Text finden:
+            const activeButton = guildCard.querySelector(`button[onclick*="'${tabName}'"]`);
+            if (activeButton) {
+                activeButton.classList.add('active');
+            }
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-             const urlParams = new URLSearchParams(window.location.search);
-             const activeTabId = urlParams.get('tab') || 'overview';
-             
-             const activeNavItem = document.querySelector(`.nav-item[data-tab-id="${activeTabId}"]`);
-             
-             if (activeNavItem) {
-                 showTab(activeTabId, activeNavItem);
-             } else {
-                 const overviewItem = document.querySelector(`.nav-item[data-tab-id="overview"]`);
-                 if (overviewItem) {
-                     showTab('overview', overviewItem);
-                 }
-             }
-        });
+        // Standardmäßig den ersten Tab beim Laden anzeigen
+        window.onload = function() {
+            // Finde die erste Gildenkarte
+            const firstGuildCard = document.querySelector('.guild-card');
+            
+            // Wenn eine Gildenkarte existiert, klicke auf den ersten Tab-Button darin, um die Ansicht zu initialisieren
+            if (firstGuildCard) {
+                const firstTabButton = firstGuildCard.querySelector('.tab-buttons .tab-button');
+                if (firstTabButton) {
+                    firstTabButton.click(); // Klickt auf den ersten Button, um die Ansicht zu initialisieren
+                }
+            }
+        }
     </script>
 </body>
 </html>
