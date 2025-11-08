@@ -56,7 +56,7 @@ USER_API_URL = 'https://discord.com/api/users/@me'
 
 # Discord Scopes, die wir benötigen (z.B. um den User-Namen und die ID zu sehen)
 # Wenn Sie Guilds/Server sehen möchten, fügen Sie 'guilds' hinzu.
-SCOPE = ['identify']
+SCOPE = ['identify', 'guilds']
 
 # --- 2. HILFSFUNKTIONEN ---
 
